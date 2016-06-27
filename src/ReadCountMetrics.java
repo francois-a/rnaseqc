@@ -58,23 +58,20 @@ public class ReadCountMetrics {
 
         runRegionCounting(REF_GENOME, refGeneFile, gatkFlags, strictMode);
 
-
-        if (!skiprRNA){
-            if (rRNAFile.endsWith(".list")){
-                countrRNAIntervals(REF_GENOME,rRNAFile, gatkFlags);
-            }else{
-                alignAndCountrRNA(rRNAFile, singleEnd, bwa,rRNAdSampleTarget);
+        if (!skiprRNA) {
+            if (rRNAFile.endsWith(".list")) {
+                countrRNAIntervals(REF_GENOME, rRNAFile, gatkFlags);
+            } else {
+                alignAndCountrRNA(rRNAFile, singleEnd, bwa, rRNAdSampleTarget);
             }
-        }else{
-            for (RNASeqMetrics.MetricSample samp: samples){
+        } else {
+            for (RNASeqMetrics.MetricSample samp: samples) {
                 IOTools.stringToFile(samp.getrRNAMetricsFile(), "0\t0");
             }
         }
-        
+
         calculateLibraryComplexity(singleEnd);
-
         combineMetricsPerSample();
-
         combineAcrossSamples();
     }
 
@@ -102,7 +99,6 @@ public class ReadCountMetrics {
         merged.toFile(this.getCombinedGCTFileName());
 
         return this.getCombinedGCTFileName();
-
     }
 
     private void combineMetricsPerSample() throws IOException {
@@ -122,7 +118,6 @@ public class ReadCountMetrics {
     private void combineMetrics(RNASeqMetrics.MetricSample samp)
                                 throws IOException{
 
-
         // load RNA counts:
         String rRNACounts[] = IOTools.fileToString(samp.getrRNAMetricsFile()).split("\\t");
         int totalrRNA = Integer.valueOf(rRNACounts[0]);
@@ -130,7 +125,6 @@ public class ReadCountMetrics {
 
         // load LC:
         String lc = LibraryComplexity.getFromFile(samp.getLibraryComplexityFile());
-
 
         // table 1
         BufferedReader in = new BufferedReader(new FileReader(samp.getTmpMetricsFile()));
@@ -174,21 +168,18 @@ public class ReadCountMetrics {
             System.out.println("Calculating library complexity for " + samp.sampId);
             Performance perf = new Performance("Libary Complexity Calculation Time");
             LibraryComplexity lc = new LibraryComplexity(!singleEnd);
-//            File temp = new File(OUT_DIR+"/"+sampId+"/"+sampId+".sorted.bam");
-            if(samp.hasList()){
+            if (samp.hasList()) {
                 ArrayList<String> files = IOTools.fileToList(samp.listFile, "\n");
-                for (String f: files){
+                for (String f: files) {
                     lc.countFragmentsV2(f);
                 }
-            }else{
+            } else {
                 lc.countFragmentsV2(samp.bamFile);
             }
 
             lc.toFile(samp.getLibraryComplexityFile());
-//            temp.delete();
 
             System.out.println(perf);
-
         }
     }
 
@@ -226,13 +217,12 @@ public class ReadCountMetrics {
     private void countrRNAIntervals(String refGenome, String rRNAIntervals, String gatkFlags) throws Exception {
 
         for (RNASeqMetrics.MetricSample samp: samples){
-           Performance perf = new Performance("CountReadMetricsWalker (rRNA) Runtime for "+samp.sampId, Performance.Resolution.minutes);
-           System.out.println("Counting rRNA reads");
-
-            GATKTools.runIntervalReadCounter(refGenome, samp.getBamFileOrList(), rRNAIntervals, samp.getrRNAMetricsFile(),gatkFlags);
+            Performance perf = new Performance("CountReadMetricsWalker (rRNA) Runtime for "+samp.sampId, Performance.Resolution.minutes);
+            System.out.println("Counting rRNA reads");
+            // rRNAIntervals: file containing intervals
+            GATKTools.runIntervalReadCounter(refGenome, samp.getBamFileOrList(), rRNAIntervals, samp.getrRNAMetricsFile(), gatkFlags);
             System.out.println(perf);
         }
-
     }
 
     private void runRegionCounting(String refGenome, String refGeneFile, String gatkFlags, boolean strictMode) throws Exception {
@@ -243,10 +233,7 @@ public class ReadCountMetrics {
             String intervals = null;// "chr1:3530586-3534177";
             GATKTools.runIntronReadCount(refGenome, samp.getBamFileOrList(), null, refGeneFile, samp.getTmpMetricsFile(), gatkFlags, strictMode);
             System.out.println(perf);
-
-
         }
-
     }
 
     public String getCombinedGCTFileName() {
@@ -264,7 +251,6 @@ public class ReadCountMetrics {
 
     public String getMetricsHTML(ArrayList<HashMap<String, String>> metricTracker) throws IOException {
 
-
         ArrayList<String[]> resultT1 = new ArrayList<String[]>();
         ArrayList<String[]> resultT2 = new ArrayList<String[]>();
         ArrayList<String[]> resultT3 = new ArrayList<String[]>();
@@ -276,8 +262,6 @@ public class ReadCountMetrics {
         String[] header3 = null;
         String[] header4 = null;
         String[] header5 = null;
-
-
 
         StringBuilder metricTable = new StringBuilder();
         for (RNASeqMetrics.MetricSample s: samples){
@@ -341,7 +325,6 @@ public class ReadCountMetrics {
                     "Similarly, <b>End 1/2 Antisense</b> are the number of End 1 or 2 reads that were sequenced in the antisense direction."+
                     "<b>End 1/2 Sense %</b> are percentages of intragenic End 1/2 reads that were sequenced in the sense direction. </p>\n");
 
-
             //System.out.println(metricTable);
             IOTools.stringToFile(this.outDir+"/countMetrics.html",metricTable.toString()); // just ouput it so we can peek
         }else{
@@ -349,8 +332,6 @@ public class ReadCountMetrics {
         }
 
         return metricTable.toString();
-
-
     }
 
 }

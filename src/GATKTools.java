@@ -21,12 +21,10 @@ public class GATKTools {
     public static void main(String[] args) {
         try{
             System.out.println("REF_GENOME BAM_FILE INTERVAL REFSEQ  outfile");
-            //test2(args[0], args[1]);
             runIntronReadCountDebug(args[0],args[1],args[2],args[3],args[4]);
         }catch(Exception e){
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -61,9 +59,6 @@ public class GATKTools {
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println(perf);
         System.out.println("\t ... GATK Depth of Coverage Analysis DONE");
-
-
-
     }
 
 
@@ -94,8 +89,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
-
-
     }
 
     /**
@@ -141,7 +134,7 @@ public class GATKTools {
         System.out.println("Running OutputCountReads Walker ....");
         CommandLineGATK instance = new CommandLineGATK();
 
-        String commandStr =  "-T OutputCountReads --outfile_readCounts "+outfile +
+        String commandStr =  "-T OutputCountReadsWalker --outfile_readCounts "+outfile +
                 /*(dSample?" -rf Downsampling -numReads 2000 -targetReads 1000":"" )+ */
                 " -R "+REF_GENOME+" -I "+BAM_FILE+ (intervalList!=null?" -L "+intervalList:"") +
                 //" -B:refseq,RefSeq "+refseq;
@@ -153,8 +146,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE (file:"+outfile+")");
-
-
     }
 
 
@@ -175,8 +166,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
-
-
     }
 
     public static void test2(String REF_GENOME, String BAM_FILE) throws Exception {
@@ -197,8 +186,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
-
-
     }
 
 
@@ -215,7 +202,7 @@ public class GATKTools {
         System.out.println("Running IntronicExpressionReadBlock Walker ....");
         CommandLineGATK instance = new CommandLineGATK();
 
-        String commandStr =  "-T IntronicExpressionReadBlock --outfile_metrics "+outfile +
+        String commandStr =  "-T IntronicExpressionReadBlockWalker --outfile_metrics "+outfile +
                 //(dSample?" -rf Downsampling -numReads 2000 -targetReads 1000":"" ) +
                 " -R "+REF_GENOME+" -I "+BAM_FILE+ (intervalList!=null?" -L "+intervalList:"") +
                 (strictMode?" -strict":"")+
@@ -227,8 +214,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
-
-
     }
 
     /**
@@ -256,8 +241,6 @@ public class GATKTools {
 
         System.out.println("GATK command result code: " + CommandLineProgram.result);
         System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
-
-
     }
 
 }

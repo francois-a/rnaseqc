@@ -20,7 +20,7 @@ import java.util.ArrayList;
  * This adaptation of the CountReadWalker tracks a series of metrics for RNA-seq QC
  *
  */
-@Requires({DataSource.READS, DataSource.REFERENCE_BASES})
+@Requires({DataSource.READS, DataSource.REFERENCE})
 public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
 //    @Argument(fullName = "outfile_metrics", shortName = "OM", doc="The destination file for the metrics", required=true)
 //    private String OUT_FILE = null;
@@ -28,8 +28,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
 //    @Argument(fullName="refseq", shortName="refseq",
 //            doc="Name of RefSeq transcript annotation file. ", required=false)
 //    String RefseqFileName = null;
-
-
 
     @Override
     protected void makeRefSeqDerviedCounts(SAMRecord read, ArrayList<RefSeqFeature> refSeqs, GenomeLoc readLoc) {
@@ -46,7 +44,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
         //                        System.out.println("\trefseq:" + refSeq.getTranscriptId());
         //                        System.out.println("\trefseq:"+refSeqLoc);
 
-
                 //GenomeLoc readLoc = ref.getLocus();
                 // sanity check:
                 if (!refSeq.overlapsP(blockLoc)){
@@ -61,8 +58,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
                 wasIntragenic = true;
         //                        System.out.println("\tIs Intragenic ...");
                 //Performance overlapps = new Performance("Overlap perf: " , Performance.Resolution.milliseconds);
-
-
 
                 if (refSeq.overlapsExonP(blockLoc)){ // returns true if any of the exons overlap this location
         //                            System.out.println("\tIs Exonic");
@@ -90,10 +85,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
         if (wasExonic) exonic++;
         if (wasIntron) intronOrUTR++;
         //if (wasCoding) coding++;
-
-
-
-
     }
 
     /**
@@ -106,7 +97,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
 
         int start  = read.getAlignmentStart();
         String contig = read.getReferenceName();
-
 
         for (final CigarElement e : read.getCigar().getCigarElements()) {
             switch (e.getOperator()) {
@@ -136,10 +126,5 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
     @Override
     public void onTraversalDone(Integer result) {
         super.onTraversalDone(result); // creates a tab delmited file with the count results
-
     }
-
-  
 }
-
-

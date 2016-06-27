@@ -20,7 +20,7 @@ import java.util.*;
  *
  */
 public class RNASeqMetrics {
-    public static String VERSION = "v1.1.8.2 05/20/15";
+    public static String VERSION = "v1.1.9 06/26/16";
 
     static String USAGE = "java -jar RNA-SeQC.jar <args>";
     private static  float LOWER_GC_CUTOFF = 0.375f;
@@ -61,9 +61,6 @@ public class RNASeqMetrics {
     private boolean runDoC = true;
     private boolean strictMode = false;
 
-    //enum StratOptions  {gc, legnth, expr, none};
-
-
 
     private static Options setupCliOptions() {
         Options opts = new Options();
@@ -84,7 +81,11 @@ public class RNASeqMetrics {
                 new Option("o", "Output directory (will be created if doesn't exist).")
         };
         // set all other options are required, and having one argument and add to Options object
-        for (Option o:required){ o.setRequired(true); o.setArgs(1); opts.addOption(o);}
+        for (Option o:required) {
+            o.setRequired(true);
+            o.setArgs(1);
+            opts.addOption(o);
+        }
         // optional parameters with one agument:
         Option [] optional = {  new Option("n", "Number of top transcripts to use."),
                 new Option("d", "Perform downsampling to the given number of reads."),
@@ -101,18 +102,22 @@ public class RNASeqMetrics {
                 new Option("rRNAdSampleTarget", "Downsamples to calculate rRNA rate more efficiently. Default is 1 million. Set to 0 to disable."),
                 new Option("gcMargin", "Used in conjunction with '-strat gc' to specify the percent gc content to use as boundaries. E.g. .25 would set a lower cutoff of 25% and an upper cutoff of 75%."),
                 new Option("gatkFlags", "A string of flags that will be passed on to the GATK"),
-                
-                
         };
-        for (Option o:optional){ o.setRequired(false); o.setArgs(1); opts.addOption(o);}
 
+        for (Option o:optional) {
+            o.setRequired(false);
+            o.setArgs(1);
+            opts.addOption(o);
+        }
         return opts;
     }
+
 
     private static void printHelp(Options opt) {
         HelpFormatter f = new HelpFormatter();
         f.printHelp(USAGE, opt);
     }
+
 
     private static void checkArgs(CommandLine cl) throws Exception{
 
@@ -127,7 +132,6 @@ public class RNASeqMetrics {
         if(!cl.getOptionValue("t").toLowerCase().endsWith(".gtf")){
             throw new Exception("Transcript file must be in GTF format (and end with the '.gtf' extension); file provided: " + cl.getOptionValue("t"));
         }
-
     }
 
     /**
@@ -137,28 +141,25 @@ public class RNASeqMetrics {
     public static void main(String[] argz) {
         Performance perf = new Performance("RNA-SeQC Total Runtime", Performance.Resolution.minutes);
         Options opts = setupCliOptions();
-        try{
+        try {
             execute(argz);
-
             System.out.println("Finished Successfully.");
             System.out.println(perf);
-        }catch (MissingOptionException moe){
+        } catch (MissingOptionException moe) {
             System.err.println(moe.getMessage());
             printHelp(opts);
             System.exit(1);
-        }
-        catch (ParseException moe){
+        } catch (ParseException moe) {
             moe.printStackTrace();
             printHelp(opts);
             System.exit(2);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println(perf);
             System.exit(3);
         }
-
     }
+
 
     private static void execute(String[] argz) throws Exception{
         System.out.println("RNA-SeQC " + VERSION);
@@ -175,9 +176,8 @@ public class RNASeqMetrics {
         if(metrics.runDoC && cl.hasOption("strat") && !cl.getOptionValue("strat").equals("none")){
             stratification(cl, argz);
         }
-
-
     }
+
 
     private void prepareFiles() throws IOException {
 
@@ -191,17 +191,15 @@ public class RNASeqMetrics {
             throw new RuntimeException("The list of samples was empty. There was something wrong with your -s tag.");
         }
 
-
         // create refGene file
-
-        try{
+        try {
             createRefGeneAndRRNAFiles(TRANSCRIPT_MODEL, REF_GENOME, refGeneFile, rRNAIntervalsCreationLocation, transcriptTypeField);
-        }catch (RuntimeException e){
+        } catch (RuntimeException e) {
             e.printStackTrace();
             System.out.println("No information for rRNA available. Continuing without rRNA calculations. (Using the -BWArRNA flag for best results)");
             skiprRNA = true;
         }
-        if (filterGCT){
+        if (filterGCT) {
             // this expressino table might have values rows that do not correspond to the transcript def.
             // they must be filtered out
             System.out.println("Filtering GTF file to correspond to GCT file.");
@@ -211,17 +209,16 @@ public class RNASeqMetrics {
         }
         
         // initialize metric tracker for this number of samples:
-        
-        for (int i = 0 ; i < bams.size(); i++){
+        for (int i = 0 ; i < bams.size(); i++) {
             metricTracker.add(new HashMap<String, String>());
         }
-
     }
+
 
     private void runMetrics() throws Exception {
 
         String metricTable = null;
-        if (!noMetrics){
+        if (!noMetrics) {
 
             ReadCountMetrics rcMetrics = new ReadCountMetrics(bams,OUT_DIR, LOWER_EXPR_CUTOFF);
             rcMetrics.runReadCountMetrics(REF_GENOME,refGeneFile, rRNAFile, this.singleEnd, this.bwa, this.rRNAdSampleTarget, this.skiprRNA, this.gatkFlags, this.strictMode);
@@ -232,9 +229,9 @@ public class RNASeqMetrics {
             // load and ouput metrics:
             metricTable = rcMetrics.getMetricsHTML(metricTracker);
 
-        }else System.out.println("Metrics suppressed");
-
-
+        } else {
+            System.out.println("Metrics suppressed");
+        }
 
         String corrTable = null;
 
@@ -245,7 +242,6 @@ public class RNASeqMetrics {
 
             corrTable = "\n<HR WIDTH=\"100%\" COLOR=\"#9090900\"  SIZE=\"3\">\n";
             corrTable+= ("\n<h2>Correlation Analysis</h2>\n");
-
 
             if (referenceGCTForCorr !=null){
                 corrTable+= createCorrHTMLTable(bams,corFile[0]); // turn corrTable into html
@@ -258,29 +254,22 @@ public class RNASeqMetrics {
             }
         }
 
-
         //todo add some stacked bar charts to visualize this data
 
         // DO DoC METRICS*********************************
         // create individual depth of coverage reports per sample
 
         if(runDoC){
-
             PerBaseDoC doc = new PerBaseDoC(bams, OUT_DIR);
 
             // this step slices up the transcripts by expression level
             doc.createExpressionStratifiedTranscriptLists(MAX, theseSamplesGCT,LOWER_EXPR_CUTOFF);
-
             doc.prepareIntervals(TRANSCRIPT_MODEL,transcriptTypeField);
-
             doc.runDoC(REF_GENOME, dSampleTarget, gatkFlags, docAll);
+
             // Create Index.html
-
             doc.createReports(TRANSCRIPT_MODEL,transcriptTypeField, details, this.gcFile, endLength);
-
-
             createTopLevelIndex(bams,MAX, metricTable, corrTable,endLength, OUT_DIR+"/index.html");
-
             if (!isStrat) createTopLevelIndex(bams,MAX, metricTable, corrTable,endLength, OUT_DIR+"/report.html");
         }
 
@@ -289,8 +278,8 @@ public class RNASeqMetrics {
         }else{
             createTSV(bams, OUT_DIR+"/metrics.tsv");
         }
-
     }
+
 
     private void createTSV(ArrayList<MetricSample> bams, String outfile) throws IOException{
         BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
@@ -305,23 +294,21 @@ public class RNASeqMetrics {
         out.write("\n");
 
         //content
-        
-        for (int i = 0 ; i < bams.size(); i++){
+        for (int i = 0 ; i < bams.size(); i++) {
             MetricSample samp = bams.get(i);
             HashMap<String,String> metrics = metricTracker.get(i);
             
             out.write(samp.sampId);
             out.write("\t");
             out.write(samp.notes);
-            for (String f: fields){
+            for (String f: fields) {
                 out.write("\t");
                 out.write(metrics.get(f));
             }
             out.write("\n");
         }
-        
-        out.close();
 
+        out.close();
     }
 
     private void prepareOptionsFromCommandLine(CommandLine cl) throws Exception {
@@ -330,7 +317,7 @@ public class RNASeqMetrics {
         runDoC = !cl.hasOption("noDoC");
         noMetrics = cl.hasOption("noReadCounting");
 
-        if(cl.hasOption("n")){
+        if (cl.hasOption("n")) {
             MAX = Integer.parseInt(cl.getOptionValue("n"));
         }
         SAMPLE_FILE = cl.getOptionValue("s");
@@ -341,16 +328,15 @@ public class RNASeqMetrics {
         transcriptTypeField = cl.getOptionValue("ttype");
         endLength = "200";
         if (cl.hasOption("e")) endLength = cl.getOptionValue("e");
-        if(cl.hasOption("rRNAdSampleTarget")) rRNAdSampleTarget = Integer.valueOf(cl.getOptionValue("rRNAdSampleTarget"));
-        if(cl.hasOption("gcMargin")) {
+        if (cl.hasOption("rRNAdSampleTarget")) rRNAdSampleTarget = Integer.valueOf(cl.getOptionValue("rRNAdSampleTarget"));
+        if (cl.hasOption("gcMargin")) {
             LOWER_GC_CUTOFF = Float.valueOf(cl.getOptionValue("gcMargin"));
             UPPER_GC_CUTOFF = 1f-LOWER_GC_CUTOFF;
         } 
         
-        if(cl.hasOption("gatkFlags")){
+        if (cl.hasOption("gatkFlags")) {
             this.gatkFlags = cl.getOptionValue("gatkFlags");
             System.out.println("Additional GATK flags provided: " + this.gatkFlags);
-
         }
 
         this.strictMode = cl.hasOption("strictMode");
@@ -364,62 +350,52 @@ public class RNASeqMetrics {
 
         rRNAIntervals= cl.getOptionValue("rRNA");
         rRNAIntervalsCreationLocation = null;
-        if (TRANSCRIPT_MODEL.toLowerCase().endsWith(".gtf")){
+        if (TRANSCRIPT_MODEL.toLowerCase().endsWith(".gtf")) {
             this.createRefGeneFromGTF = true;
             refGeneFile = OUT_DIR +"/refGene.txt";
 
-            if (rRNAIntervals == null && !cl.hasOption("BWArRNA")){
+            if (rRNAIntervals == null && !cl.hasOption("BWArRNA")) {
                 System.out.println("Creating rRNA Interval List based on given GTF annotations");
                 rRNAIntervalsCreationLocation = OUT_DIR +"/rRNA_intervals.list";
                 rRNAIntervals = rRNAIntervalsCreationLocation;
             }
-        }else{
+        } else {
             refGeneFile = TRANSCRIPT_MODEL;
             //todo if refGene is provided directly this implementation requires that the rRNAIntervals also
             // be provided, because we are not extracting them from the provided refgene file.
         }
 
-
         if (cl.hasOption("strat") && cl.getOptionValue("strat").equals("none") && !cl.hasOption("corr")){
             System.out.println("Suppressing Read Count Metrics within Recursive Call.");
-            noMetrics = true; // if there's no correlation, and we're in a recursive call, then we don't need to
-            // calculate these metrics.
+            noMetrics = true; // if there's no correlation, and we're in a recursive call, then we don't need to calculate these metrics.
         }
 
-
-        if( cl.hasOption("BWArRNA")){
+        if( cl.hasOption("BWArRNA")) {
             rRNAFile = cl.getOptionValue("BWArRNA");
-        }else{
+        } else {
             rRNAFile = rRNAIntervals;
         }
 
         filterGCT = false;
-        if(cl.hasOption("expr")){
+        if (cl.hasOption("expr")) {
             filterGCT = true;
             // this expressino table might have values rows that do not correspond to the transcript def.
             // they must be filtered out
             theseSamplesGCT = cl.getOptionValue("expr");
-
         }
-
 
         referenceGCTForCorr =  cl.getOptionValue("corr");
 
-
         dSampleTarget = null;
-        if (cl.hasOption("d") && !cl.hasOption("noReadCounting")){
-            dSampleTarget =  cl.getOptionValue("d");
+        if (cl.hasOption("d") && !cl.hasOption("noReadCounting")) {
+            dSampleTarget = cl.getOptionValue("d");
         }
 
         this.gcFile = cl.getOptionValue("gc");
-
         this.doStrat = cl.hasOption("strat") && !cl.getOptionValue("strat").equals("none");
         this.isStrat = cl.hasOption("strat") && cl.getOptionValue("strat").equals("none");
-
-        this.singleEnd =  cl.hasOption("singleEnd");
-
+        this.singleEnd = cl.hasOption("singleEnd");
         this.bwa  = cl.getOptionValue("bwa");
-        
         this.gapLengthDistribution = cl.hasOption("gld");
     }
 
@@ -432,9 +408,8 @@ public class RNASeqMetrics {
         GCTFile gct =new GCTFile(expr);
         GCTFile filtered = gct.filterById(modelIds);
         filtered.toFile(filteredFileName);
-
-
     }
+
 
     private static void stratification(CommandLine cl, String[] argz) throws Exception{
         String TRANSCRIPT_MODEL = cl.getOptionValue("t");
@@ -443,7 +418,6 @@ public class RNASeqMetrics {
         if (cl.getOptionValue("strat").contains("gc")){  // stratification only supported when GTF file (not refgene) is provided
 
             HashSet<String>[] stratifiedTranscripts = getGCStratifiedTranscripts(cl.getOptionValue("gc"),2f);
-
 
             System.out.println("Copying transcript model in to GC stratifications");
             File dir = new File(OUT_DIR+"/gc");
@@ -461,15 +435,11 @@ public class RNASeqMetrics {
             Transcript.copyFiltered(TRANSCRIPT_MODEL,highGCFile, stratifiedTranscripts[2]);
 
             // call this main method for each one:
-
-
             mainRecursive(lowGCFile,OUT_DIR+"/gc/low",argz);
             mainRecursive(midGCFile,OUT_DIR+"/gc/mid",argz);
             mainRecursive(highGCFile,OUT_DIR+"/gc/high",argz);
         }
-
     }
-
 
 
     private static void mainRecursive(String gtfFile, String outdir, String[] argz) throws Exception{
@@ -499,7 +469,6 @@ public class RNASeqMetrics {
             if(newArgs[i].equals("-expr")){
                 userExpr = true;
             }
-
         }
 
         ArrayList<String> additionalArgs = new ArrayList<String>();
@@ -522,43 +491,35 @@ public class RNASeqMetrics {
             i++;
         }
 
-
-
         System.out.println("Stratifying transcripts with file: \t"+gtfFile);
         System.out.println("\tArguments in this stratification \t" + Arrays.toString(newArgs2));
         RNASeqMetrics.execute(newArgs2);
     }
 
-    private static HashSet<String>[] getGCStratifiedTranscripts(String gcFileName, Float sigmas) throws IOException {
 
+    private static HashSet<String>[] getGCStratifiedTranscripts(String gcFileName, Float sigmas) throws IOException {
         // read in the ids and GC contents
         BufferedReader in = new BufferedReader (new FileReader(gcFileName));
 
         String line = in.readLine(); // no header
         ArrayList<String> ids = new ArrayList<String>();
         MathList gcVals = new MathList();
-        while (line != null){
-
+        while (line != null) {
             String [] split = line.split("\\t");
             ids.add(split[0]);
             gcVals.add(Float.valueOf(split[1]));
             line = in.readLine();
         }
 
-
         // find low GC transcripts
         HashSet<String> lowGCIds = new HashSet<String>();
 
-//        float sigma = gcVals.getStdDev();
-//        float mean = gcVals.getMean();
-
-        float lowerCutoff = LOWER_GC_CUTOFF; // 0.36f;//mean - (sigma * sigmas);
+        float lowerCutoff = LOWER_GC_CUTOFF; //mean - (sigma * sigmas);
         System.out.println("Lower Bound Z score cutoff: " + lowerCutoff);
         for (int i = 0 ; i < gcVals.size(); i++){
             if (gcVals.get(i) < lowerCutoff){
                 lowGCIds.add(ids.get(i));
             }
-
         }
 
         System.out.println("\tPercentile:\t" + (float)lowGCIds.size()/(float)gcVals.size());
@@ -571,13 +532,12 @@ public class RNASeqMetrics {
         // find high GC transcripts
         HashSet<String> highGCIds = new HashSet<String>();
 
-        float upperCutoff = UPPER_GC_CUTOFF ; //0.666f;// mean + (sigma * sigmas);
+        float upperCutoff = UPPER_GC_CUTOFF ; // mean + (sigma * sigmas);
         System.out.println("Upper Bound Z score cutoff: " + upperCutoff);
         for (int i = 0 ; i < gcVals.size(); i++){
             if (gcVals.get(i) > upperCutoff){
                 highGCIds.add(ids.get(i));
             }
-
         }
         System.out.println("\tPercentile:\t" + (float)highGCIds.size()/(float)gcVals.size());
         System.out.println("\tTotal Transcripts in this percentile: " + highGCIds.size());
@@ -592,7 +552,6 @@ public class RNASeqMetrics {
             if (gc >= lowerCutoff && gc <= upperCutoff){
                 midGCIds.add(ids.get(i));
             }
-
         }
         System.out.println("\tMiddle Percentile:\t" + (float)midGCIds.size()/(float)gcVals.size());
         System.out.println("\tTotal Transcripts in this percentile: " + midGCIds.size());
@@ -611,8 +570,6 @@ public class RNASeqMetrics {
             //load comparison CGT file:
             GCTFile gct = new GCTFile(comparisonGCT);
 
-
-
             GCTFile combined  = rnaSeq.combine(gct, false, false); // combine by ID and not description
 
             String expFile =OUT_DIR + "/expressionForCorr.gct";
@@ -620,19 +577,15 @@ public class RNASeqMetrics {
 
             // run R script
             String referenceSamp = gct.getSamples()[0];
-
-
             runCorrelation(referenceSamp, combined, corrFiles[0]);
         }
 
-        if (rnaSeq.getSamples().length > 1){
+        if (rnaSeq.getSamples().length > 1) {
             runCorrelationMatrix(rnaSeq, corrFiles[1]);
             runCorrelationMatrix(rnaSeq, corrFiles[2]);
         }
         
         return corrFiles;
-
-
     }
 
     public static void runCorrelation(String referenceSample, GCTFile gct,  String outfile) throws IOException, InterruptedException
@@ -640,30 +593,23 @@ public class RNASeqMetrics {
         String[] samples = gct.getSamples();
         int refIndex = -1;
         int index =0;
-        while(refIndex == -1 && index < samples.length)
-        {
-            if(samples[index].equals(referenceSample))
-            {
+        while(refIndex == -1 && index < samples.length) {
+            if(samples[index].equals(referenceSample)) {
                 refIndex = index;
             }
             index++;
         }
 
-        if(refIndex == -1)
-        {
+        if(refIndex == -1) {
             System.err.println("Could not find reference sample" + referenceSample);
             System.exit(1);
         }
 
-
         PrintWriter writer = null;
-
-        try
-        {
+        try {
             // spearman
             double[]spearmans = spearman(gct,refIndex);
             double[] pearsons = pearson(gct,refIndex,false);
-
             
             writer = new PrintWriter(outfile);
             writer.write("Sample\tSpearman\tPearson\n");
@@ -672,21 +618,14 @@ public class RNASeqMetrics {
                 writer.write(""+spearmans[i]); writer.write('\t');
                 writer.write(""+pearsons[i]); writer.write('\n');
             }
-        }
-        catch(IOException io)
-        {
+        } catch(IOException io) {
             io.printStackTrace();
             System.err.println("Unable to perform expression correlation comparison.");
-        }
-        finally
-        {
-            if(writer != null)
-            {
+        } finally {
+            if(writer != null) {
                 writer.close();
             }
         }
-        
-      
     }
 
 
@@ -706,10 +645,8 @@ public class RNASeqMetrics {
         }
         out.write("\n");
 
-
         // make matrix
-
-        for (int i=0 ; i < samps.length; i++ ){
+        for (int i=0 ; i < samps.length; i++ ) {
             double [] results;
             if (isPearson){
                 results = pearson(gct,i,true);
@@ -726,16 +663,10 @@ public class RNASeqMetrics {
             }
             out.write('\n');
         }
-        
         out.close();
     }
 
-    
-    
-    
-    
-    
-    
+
     public static double[] spearman(GCTFile gct, int refIndex){
 
         SpearmansCorrelation corr = new SpearmansCorrelation();
@@ -753,15 +684,13 @@ public class RNASeqMetrics {
         double[] refColTemp = new double[indices.size()];
         int nSamps = gct.getSamples().length;
         double[] results = new double[nSamps];
-        for(int c=0; c < nSamps; c++)
-        {
+        for(int c=0; c < nSamps; c++) {
             double[] column = gct.getColumnData(c);
 
             double[] columnTemp = new double[indices.size()];
 
             //match NAs in both data columns
-            for(int q =0;q < indices.size();q++)
-            {
+            for(int q =0;q < indices.size();q++) {
                 columnTemp[q] = column[indices.get(q)];
                 refColTemp[q] = refColumn[indices.get(q)];
             }
@@ -790,8 +719,7 @@ public class RNASeqMetrics {
         double[] refColumn = gct.getColumnData(refIndex);
 
         ArrayList<Integer> indices = new ArrayList();
-        for(int p =0;p <refColumn.length;p++)
-        {
+        for(int p =0;p <refColumn.length;p++) {
             if(!Double.isNaN(refColumn[p]))
             {
                 indices.add(p);
@@ -801,15 +729,13 @@ public class RNASeqMetrics {
         double[] refColTemp = new double[indices.size()];
         int nSamps = gct.getSamples().length;
         double[] results = new double[nSamps];
-        for(int c=0; c < nSamps; c++)
-        {
+        for(int c=0; c < nSamps; c++) {
             double[] column = gct.getColumnData(c);
 
             double[] columnTemp = new double[indices.size()];
 
             //match NAs in both data columns
-            for(int q =0;q < indices.size();q++)
-            {
+            for(int q =0;q < indices.size();q++) {
                 columnTemp[q] = Math.log(.01 + column[indices.get(q)]);
                 refColTemp[q] = (logRef?  Math.log(0.01 +refColumn[indices.get(q)]):refColumn[indices.get(q)]);
             }
@@ -1279,7 +1205,6 @@ public class RNASeqMetrics {
                 result+="<td align='right'>"+cell+"</td>";
             }
 
-            //result+="";
             in.close();
             return result;
 
@@ -1315,6 +1240,7 @@ public class RNASeqMetrics {
 
         return refGeneFile;
     }
+
 
     public static class MetricSample {
         String sampId ;
@@ -1355,11 +1281,6 @@ public class RNASeqMetrics {
                 return readInSamplesFromCL(sampleFile,outDir,",");
             }
 
-//        sampId = b[0];
-//        bamFile = b[1];
-//        notes = b[2];
-
-
             HashMap<String,ArrayList<String[]>>  samples = new HashMap<String,ArrayList<String[]>>();
 
             BufferedReader in = new BufferedReader(new FileReader(sampleFile));
@@ -1394,7 +1315,7 @@ public class RNASeqMetrics {
                 if (thisList.size() == 1){
                     String[] samp = thisList.get(0);
                     finalSamps.add(new MetricSample(samp[0],samp[1],samp[2]));
-                }else{
+                } else {
                     // make list file
                     String bamList = "";
                     for (String[] split: thisList){
@@ -1451,9 +1372,7 @@ public class RNASeqMetrics {
 
                 String gctFile = outDir+"/" + samp.sampId +"/" + samp.sampId+".metrics.tmp.txt.rpkm.gct";
                 samp.setGCTFile(gctFile);
-
             }
-
         }
 
 
@@ -1474,9 +1393,9 @@ public class RNASeqMetrics {
         }
 
         public String getBamFileOrList() {
-            if (this.hasList()){
+            if (this.hasList()) {
                 return this.listFile;
-            }else{
+            } else {
                 return this.bamFile;
             }
         }
@@ -1495,7 +1414,6 @@ public class RNASeqMetrics {
 
         public String getSampleDirectory() {
             return this.sampDir;
-
         }
 
         public void setLibraryComplexityFile(String libraryComplexityFile) {
@@ -1532,10 +1450,10 @@ public class RNASeqMetrics {
 
         public String getExpressionDir(PerBaseDoC.ExpressionLevel level) {
             switch(level){
-                case low: return  sampDir+"/lowexpr/";
+                case low: return sampDir+"/lowexpr/";
                 case medium: return sampDir+"/medexpr/";
                 case high: return sampDir+"/highexpr/";
-                case all: return sampDir+"/allexpr/";
+                // case all: return sampDir+"/allexpr/";  // breaks pre-1.1.9 version
             }
             return null;
         }
@@ -1546,7 +1464,6 @@ public class RNASeqMetrics {
 
         public String getDoCResultsFile(PerBaseDoC.ExpressionLevel level) {
             return getExpressionDir(level) +"/perBaseDoC.out";
-
         }
 
         public String getMeanCoverageByPosFile(PerBaseDoC.ExpressionLevel level) {

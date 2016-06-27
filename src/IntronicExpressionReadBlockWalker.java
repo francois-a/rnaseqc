@@ -1,6 +1,7 @@
 package org.broadinstitute.cga.rnaseq.gatk;
 
 import net.sf.samtools.SAMRecord;
+// import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.cga.rnaseq.Transcript;
 import org.broadinstitute.sting.gatk.walkers.DataSource;
 import org.broadinstitute.sting.gatk.walkers.Requires;
@@ -21,7 +22,7 @@ import java.util.*;
  * This adaptation of the CountReadWalker tracks a series of metrics for RNA-seq QC
  *, DataSource.REFERENCE_BASES
  */
-@Requires({DataSource.READS, DataSource.REFERENCE_BASES})
+@Requires({DataSource.READS, DataSource.REFERENCE})
 public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalker {
     public static final int LOWER_READ_COUNT_CUTOFF =  5;
     
@@ -748,5 +749,3 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
         }
     }
 }
-
-

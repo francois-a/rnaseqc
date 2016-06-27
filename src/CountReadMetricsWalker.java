@@ -4,7 +4,7 @@ import net.sf.samtools.SAMRecord;
 import org.broadinstitute.cga.tools.ObjectCounter;
 import org.broadinstitute.sting.commandline.Argument;
 import org.broadinstitute.sting.gatk.contexts.ReferenceContext;
-import org.broadinstitute.sting.gatk.refdata.ReadMetaDataTracker;
+import org.broadinstitute.sting.gatk.refdata.RefMetaDataTracker;
 import org.broadinstitute.sting.gatk.refdata.SeekableRODIterator;
 import org.broadinstitute.sting.gatk.refdata.tracks.RMDTrack;
 import org.broadinstitute.sting.gatk.refdata.tracks.RMDTrackBuilder;
@@ -35,7 +35,7 @@ import java.util.*;
  * This adaptation of the CountReadWalker tracks a series of metrics for RNA-seq QC
  *
  */
-@Requires({DataSource.READS, DataSource.REFERENCE_BASES})
+@Requires({DataSource.READS, DataSource.REFERENCE})
 public class CountReadMetricsWalker extends ReadWalker<Integer,Integer> {
     @Argument(fullName = "outfile_metrics", shortName = "OM", doc="The destination file for the metrics", required=true)
     protected String OUT_FILE = null;
@@ -123,7 +123,7 @@ public List<Object> getReferenceMetaData(final String name) {
 */
 
     @Override
-    public Integer map(ReferenceContext ref, GATKSAMRecord read, ReadMetaDataTracker metaDataTracker) {
+    public Integer map(ReferenceContext ref, GATKSAMRecord read, RefMetaDataTracker metaDataTracker) {
 
         if (read.getNotPrimaryAlignmentFlag()){
             altAlignments++;
@@ -221,9 +221,6 @@ public List<Object> getReferenceMetaData(final String name) {
                         }
                     }
                 }
-
-                
-                
                 
                 // sanity check:
                 if (read.getAlignmentStart() == SAMRecord.NO_ALIGNMENT_START){
@@ -267,11 +264,7 @@ public List<Object> getReferenceMetaData(final String name) {
                     //forRefs.outputIfTookTime();
                 }
                 //perf.outputIfTookTime();
-
-
             } // end of if alligned
-
-
         }// end of not primary alignment check
         return 1;
     }

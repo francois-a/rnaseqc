@@ -28,92 +28,54 @@ import org.jfree.data.xy.XYSeriesCollection;
  *  This class encapulates the job of running GATK depth of coverage analysis on a per-base basis.
  */
 public class PerBaseDoC {
-	//static int MAX = 10;
 
-	
 	static String ENSEMBL_BASEURL = "http://uswest.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=";
-
     static int MAX_GNUPLOTS = 100;
 	static int DISTANCE_FROM_3PRIME_PLOT_BUCKETS = 2000;
     static int GAP_LENGTH_HISTOGRAM_BUCKETS = 500;
 	static String USAGE = "java -jar GtexDoc.jar [--noGATK] No.OfGenes EXPRESSION_FILE GENOME_MAP REF_GENOME BAM_FILE OUT_DIR";
-    //private String gCFile = null;  //should probably remove this
-    //private float[] averageCovs = null;
     private ArrayList<RNASeqMetrics.MetricSample> samples;
-
     static  String EXPR_SUFFIX = ".transcripts.list";
-    //private String transcriptTypeField;
-    
-    
-
 	String sampleId;
-//    int geneCap =200;
-
     boolean noGatk = false;
-	
     private String outDir;
-
-    enum ExpressionLevel {low, medium, high, all};
-
+    enum ExpressionLevel {low, medium, high};  //, all};  // breaks pre-1.1.9 version
 
 
     public PerBaseDoC(ArrayList<RNASeqMetrics.MetricSample> bams, String OUT_DIR) {
-        //this.sequenceFile = SEQUENCE_FILE;
         this.outDir = OUT_DIR;
-        //cleanDir(this.outDir);
         this.samples = bams;
-
     }
 
 
     public static void main(String[] args) {
-		try{
+        try {
+            if (args.length <7) {
+                System.out.println("USAGE:\t"+USAGE);
+                return;
+            }
 
+            // GET ARGUMENTS****************************
+            int a = 0;
+            boolean noGatk = false;
+            if (args[0].equals("--noGATK")){
+                noGatk = true;
+                a++;
+            }
+            int MAX = Integer.parseInt(args[a++]);
+            String EXPRESSION_FILE = args[a++];
+            String GENOME_MAP = args[a++];
+            String REF_GENOME = args[a++];
+            String BAM_FILE = args[a++];
+            String OUT_DIR = args[a++];
+            // ******************************************
 
-            // SCALE TEST
-//            ArrayList<Integer> ints = new ArrayList<Integer>();
-//            for (int i = 0 ; i < 100; i++){
-//                ints.add(i);
-//            }
-//
-//            ArrayList<Integer> scaled = PerBaseDoC.scale(ints,10);
-//
-//            for (int i = 0 ; i < 100 ; i++){
-//                System.out.print("" + ints.get(i));
-//                if (i < scaled.size()){
-//                    System.out.print("\t" + scaled.get(i));
-//                }
-//                System.out.println();
-//            }
-//
-//            if (true) return ;
-            
-            
-            
-            
-            
-			if (args.length <7) { System.out.println("USAGE:\t"+USAGE); return;}
+            String sampleId = EXPRESSION_FILE.replace(".geneexpression.txt", "");
+            if (sampleId.equals(EXPRESSION_FILE)) {
+                sampleId="AnonymousSample";
+            }
 
-
-			// GET ARGUMENTS****************************
-			int a = 0;
-			boolean noGatk = false;
-			if (args[0].equals("--noGATK")){
-				noGatk = true;
-				a++;
-			}
-			int MAX = Integer.parseInt(args[a++]);
-			String EXPRESSION_FILE = args[a++];
-			String GENOME_MAP = args[a++];
-			String REF_GENOME = args[a++];
-        	String BAM_FILE = args[a++];
-			String OUT_DIR = args[a++];
-			// ******************************************
-
-			String sampleId = EXPRESSION_FILE.replace(".geneexpression.txt", "");
-			if (sampleId.equals(EXPRESSION_FILE)) sampleId="AnonymousSample";
 /*
-
             ArrayList<String> bams  = new ArrayList<String>();
             bams.add(BAM_FILE);
             PerBaseDoC doc = new PerBaseDoC(bams, OUT_DIR);
@@ -127,13 +89,13 @@ public class PerBaseDoC {
 
 
             createTopLevelIndex(bams,MAX, metricTable, corrTable,endLength, OUT_DIR+"/index.html");
-			System.out.println("Done.");
-			*/
-		}catch (Exception e){
-			e.printStackTrace();
-			System.out.println("USAGE:\t"+USAGE);
-		}
-	}
+            System.out.println("Done.");
+            */
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("USAGE:\t"+USAGE);
+        }
+    }
 
 
     /**
@@ -155,10 +117,9 @@ public class PerBaseDoC {
         Arrays.fill(counts, 0);
         Arrays.fill(covs,0);
 
-
-        for (Transcript t: transcripts){
+        for (Transcript t: transcripts) {
             ArrayList<Integer> cov = t.getCoverage();
-            for (int i = 0 ; i < buckets&& i< cov.size(); i++){
+            for (int i = 0 ; i < buckets&& i< cov.size(); i++) {
                 int backDex = cov.size()-i-1;
                 counts[i]++;
                 covs[i]+=cov.get(backDex);  // the resulting values are from 3' end to the 1000 positions from 3'
@@ -166,18 +127,16 @@ public class PerBaseDoC {
         }
 
         float[] averageCovs = new float[buckets];
-        for (int i = 0 ; i < buckets; i++){
+        for (int i = 0 ; i < buckets; i++) {
             averageCovs[i] = (float)covs[i] / (float)counts[i];
         }
 
-
         //save to file:
         BufferedWriter out = new BufferedWriter (new FileWriter(outfile));
-        for (int i = 0 ; i < buckets ; i++){
+        for (int i = 0 ; i < buckets ; i++) {
             out.write("" + averageCovs[i] + "\n");
         }
         out.close();
-
     }
 
 
@@ -191,7 +150,6 @@ public class PerBaseDoC {
      * @throws IOException
      */
     private void calculateAverageCoverageByNormalizedPosition(TranscriptList transcripts, String outfile) throws IOException{
-        // create a 1000 buckets
         int buckets = 100;
 
         int[] counts = new int[buckets];
@@ -200,60 +158,49 @@ public class PerBaseDoC {
         Arrays.fill(counts, 0);
         Arrays.fill(covs,0);
 
-
-        for (Transcript t: transcripts){
-
+        for (Transcript t: transcripts) {
             if (t.getCoverage().size()>0){
                 ArrayList<Integer>cov = scale(t.getCoverage(), buckets);
-
-//                System.err.println("WARNING: Transcript has no coverage: " + t.getTranscriptId());
-                for (int i = 0 ; i < cov.size(); i++){
-                    //int backDex = cov.size()-i-1;
+                for (int i = 0 ; i < cov.size(); i++) {
                     counts[i]++;
                     covs[i]+=cov.get(i);
                 }
-
-
             }
         }
 
         float[] averageCovs = new float[buckets];
-        for (int i = 0 ; i < buckets; i++){
-            if(counts[i] == 0){
+        for (int i = 0 ; i < buckets; i++) {
+            if(counts[i] == 0) {
                 averageCovs[i] = 0;
-            }else{
+            } else {
                 averageCovs[i] = (float)covs[i] / (float)counts[i];
             }
         }
 
-
         //save to file:
         BufferedWriter out = new BufferedWriter (new FileWriter(outfile));
-        for (int i = 0 ; i < buckets ; i++){
+        for (int i = 0 ; i < buckets ; i++) {
             out.write("" + averageCovs[i] + "\n");
         }
         out.close();
-
     }
 
     
     private static ArrayList<Integer> scale(ArrayList<Integer> original, int newLength) {
         ArrayList<Integer> scaled = new ArrayList<Integer>(newLength);
 
-        
         float scaleFactor = (float)original.size() / (float)newLength;
-//        System.out.println("Scale factor: " + scaleFactor);
-        
-        for (int i = 0 ; i < newLength; i++){
+        for (int i = 0 ; i < newLength; i++) {
             int start = (int)(i*scaleFactor);
             int stop = (int)((i+1)*scaleFactor);
 
-//            System.out.println("" + i + " in new vec is between " + start + " and " + stop +" in old vec");
-            if (start == stop) stop = start+1;
+            if (start == stop) {
+                stop = start+1;
+            }
             
             int sum = 0;
             int n = 0;
-            for (int j = start; (j< stop) && (j < original.size()); j++){
+            for (int j = start; (j< stop) && (j < original.size()); j++) {
                 sum += original.get(j);
                 n++;
             }
@@ -281,254 +228,234 @@ public class PerBaseDoC {
         int topBin = 0;
         int topBinLength = GAP_LENGTH_HISTOGRAM_BUCKETS;
 
-        for (Transcript t: transcripts){
+        for (Transcript t: transcripts) {
             topBin += t.binGaps(gapHist,topBinLength);
         }
 
         //save to file:
         BufferedWriter out = new BufferedWriter (new FileWriter(outfile));
-        
-        for (int i = 1 ; i < topBinLength ; i++){
+        for (int i = 1 ; i < topBinLength ; i++) {
             out.write("" + gapHist.getCount(new Integer(i)) + "\n");
         }
         out.write("" + topBin + "\n");
         out.close();
-
-
     }
 
-	public static void cleanDir(String oUT_DIR) {
-	
-		File dir = new File(oUT_DIR);
-		dir.mkdir();
-		for (String file: dir.list()){
-			if (file.endsWith(".DoC")){
-				file = dir.getAbsolutePath() + "/" + file;
-				//System.out.println("Deleting " + file+ ":" +new File(file).delete());
-			}
-		}
-		System.out.println("Writing DoC per gene into: "+dir.getAbsolutePath());
+
+    public static void cleanDir(String oUT_DIR) {
+        File dir = new File(oUT_DIR);
+        dir.mkdir();
+        for (String file: dir.list()){
+            if (file.endsWith(".DoC")){
+                file = dir.getAbsolutePath() + "/" + file;
+            }
+        }
+        System.out.println("Writing DoC per gene into: "+dir.getAbsolutePath());
+    }
 
 
-	}
-
-
-	/**
-	 * Creates one big long HTML page for all the plots, as well as an individual page for each transcript
-	 * 
-	 *
+    /**
+     * Creates one big long HTML page for all the plots, as well as an individual page for each transcript
+     *
      * @param outDir
      * @param genes
      * @throws IOException
-	 */
-	private void createDetailedHTML(String outDir, Collection<Transcript> genes, boolean useGC) throws IOException{
-		BufferedWriter outPlots = new BufferedWriter(new FileWriter(outDir+"/plots.html"));
-		
-		outPlots.write("<html>\n<head><title>Depth of Coverage Report for "+this.sampleId+"</title>"+RNASeqMetrics.getStyle()+"</head>\n");
-		outPlots.write("<body>\n");
-		
-		
-		for (Transcript g: genes){
-			
-			String entryHTML = createDetailedHTML(g, useGC);
-			outPlots.write(entryHTML);
-			
-			BufferedWriter out = new BufferedWriter(new FileWriter(outDir+"/"+g.getTranscriptId()+".html"));
+     */
+    private void createDetailedHTML(String outDir, Collection<Transcript> genes, boolean useGC) throws IOException{
+        BufferedWriter outPlots = new BufferedWriter(new FileWriter(outDir+"/plots.html"));
 
-			out.write("<html>\n<head><title>Depth of Coverage Report for "+g.getTranscriptId()+"</title>"+RNASeqMetrics.getStyle()+"</head>\n");
-			out.write("<body>\n");
-			
-			out.write(entryHTML);
-			
-			out.write("<h5>"+new Date()+"</h5>\n");
+        outPlots.write("<html>\n<head><title>Depth of Coverage Report for "+this.sampleId+"</title>"+RNASeqMetrics.getStyle()+"</head>\n");
+        outPlots.write("<body>\n");
 
-			out.write("</body>\n</html>");
-			out.close();
+        for (Transcript g: genes) {
+            String entryHTML = createDetailedHTML(g, useGC);
+            outPlots.write(entryHTML);
 
-		}
+            BufferedWriter out = new BufferedWriter(new FileWriter(outDir+"/"+g.getTranscriptId()+".html"));
+            out.write("<html>\n<head><title>Depth of Coverage Report for "+g.getTranscriptId()+"</title>"+RNASeqMetrics.getStyle()+"</head>\n");
+            out.write("<body>\n");
+            out.write(entryHTML);
+            out.write("<h5>"+new Date()+"</h5>\n");
+            out.write("</body>\n</html>");
+            out.close();
+        }
 
-		outPlots.write("<h5>"+new Date()+"</h5>\n");
+        outPlots.write("<h5>"+new Date()+"</h5>\n");
+        outPlots.write("</body\n</html>");
+        outPlots.close();
+    }
 
-		outPlots.write("</body\n</html>");
-		outPlots.close();
-		
-	}
-
-	/**
-	 * Formats an report entry in HTML. This corresponds to a single transcript
+    /**
+     * Formats an report entry in HTML. This corresponds to a single transcript
      * Does not include body or html header
-	 * 
-	 * @param g
-	 * @return
-	 * @throws IOException
-	 */
-	private static String createDetailedHTML(Transcript g, boolean useGC) throws IOException{
+     *
+     * @param g
+     * @return
+     * @throws IOException
+     */
+    private static String createDetailedHTML(Transcript g, boolean useGC) throws IOException{
 
         DoCMetrics m = g.getDoCMetrics();
-		StringBuilder str = new StringBuilder();
-
+        StringBuilder str = new StringBuilder();
 
         // ***************************************************************
         // TRANSCRIPT AND COVERAGE (expression file stuff)
         str.append("<h2>").append(g.getAnnotation().getName()).append(" / ").append(g.getTranscriptId()).append("</h2></a>\n");
-		str.append("<h3>Expression file info</h3>\n");
-		str.append("<table>");
-		str.append("<tr><td>Transcript Id:</td><td><a target='_new' href='"+ENSEMBL_BASEURL + g.getTranscriptId() + "'>" + g.getTranscriptId() + "</a></td></tr>");
-		str.append("<tr><td>Transcript Length:</td><td align='right'>");
-					
-		str.append(g.getLength());
-		str.append("</td></tr><tr><td>Total Coverage:</td><td align='right'>");
-		str.append(m.getTotalCoverage());
-		str.append("</td></tr><tr><td>Average Coverage:</td><td align='right'>");
-		str.append(m.getMeanCoverage());
-		str.append("</td></tr><tr><td>Standard Deviation:</td><td align='right'>");
-		str.append("" + String.format("%.2f", m.getStdDev()));
-		str.append("</td></tr><tr><td>Coefficient of Variation:</td><td align='right'>");
-		str.append(""+m.getCV());
+        str.append("<h3>Expression file info</h3>\n");
+        str.append("<table>");
+        str.append("<tr><td>Transcript Id:</td><td><a target='_new' href='"+ENSEMBL_BASEURL + g.getTranscriptId() + "'>" + g.getTranscriptId() + "</a></td></tr>");
+        str.append("<tr><td>Transcript Length:</td><td align='right'>");
 
-		str.append("</td>\n");
-			
-		str.append("</tr></table>\n");
+        str.append(g.getLength());
+        str.append("</td></tr><tr><td>Total Coverage:</td><td align='right'>");
+        str.append(m.getTotalCoverage());
+        str.append("</td></tr><tr><td>Average Coverage:</td><td align='right'>");
+        str.append(m.getMeanCoverage());
+        str.append("</td></tr><tr><td>Standard Deviation:</td><td align='right'>");
+        str.append("" + String.format("%.2f", m.getStdDev()));
+        str.append("</td></tr><tr><td>Coefficient of Variation:</td><td align='right'>");
+        str.append(""+m.getCV());
+
+        str.append("</td>\n");
+
+        str.append("</tr></table>\n");
 
         // ***************************************************************
         // ENDS
-		str.append("<h3>Ends</h3>\n");
-		str.append("<table border =1> <tr> <th>End</th><th>10 Bases</th><th>50 Bases</th><th>100 Bases</th>");
-		str.append("<th>10 Base Norm</th><th>50 Base Norm</th><th>100 Base Norm</th></tr>\n");
-		str.append("<tr><td>5'</td>");
-		str.append("<td align='right'>"+m.getFiveEnd10() + "</td>");
-		str.append("<td align='right'>"+m.getFiveEnd50() + "</td>");
+        str.append("<h3>Ends</h3>\n");
+        str.append("<table border =1> <tr> <th>End</th><th>10 Bases</th><th>50 Bases</th><th>100 Bases</th>");
+        str.append("<th>10 Base Norm</th><th>50 Base Norm</th><th>100 Base Norm</th></tr>\n");
+        str.append("<tr><td>5'</td>");
+        str.append("<td align='right'>"+m.getFiveEnd10() + "</td>");
+        str.append("<td align='right'>"+m.getFiveEnd50() + "</td>");
         str.append("<td align='right'>").append(m.getFiveEnd100()).append("</td>");
-		str.append("<td align='right'>"+ String.format("%.3f",(m.getFiveEnd10()/ (m.getMeanCoverage()))) + "</td>");
-		str.append("<td align='right'>"+String.format("%.3f",(m.getFiveEnd50()/(m.getMeanCoverage()))) + "</td>");
-		str.append("<td align='right'>"+String.format("%.3f",(m.getFiveEnd100()/(m.getMeanCoverage()))) + "</td>");
-			
-		str.append("</tr>\n<tr>\n<td>3'</td>");
+        str.append("<td align='right'>"+ String.format("%.3f",(m.getFiveEnd10()/ (m.getMeanCoverage()))) + "</td>");
+        str.append("<td align='right'>"+String.format("%.3f",(m.getFiveEnd50()/(m.getMeanCoverage()))) + "</td>");
+        str.append("<td align='right'>"+String.format("%.3f",(m.getFiveEnd100()/(m.getMeanCoverage()))) + "</td>");
 
-		str.append("<td align='right'>"+m.getThreeEnd10() + "</td>");
+        str.append("</tr>\n<tr>\n<td>3'</td>");
+
+        str.append("<td align='right'>"+m.getThreeEnd10() + "</td>");
         str.append("<td align='right'>").append(m.getThreeEnd50()).append("</td>");
-		str.append("<td align='right'>"+m.getThreeEnd100() + "</td>");
-		str.append("<td align='right'>"+ String.format("%.3f",(m.getThreeEnd10()/ (m.getMeanCoverage()))) + "</td>");
-		str.append("<td align='right'>"+String.format("%.3f",(m.getThreeEnd50()/(m.getMeanCoverage()))) + "</td>");
-		str.append("<td align='right'>"+String.format("%.3f",(m.getThreeEnd100()/(m.getMeanCoverage()))) + "</td>");
-		str.append("</tr>\n</table>\n");
-			
-		str.append("<p>End coverage is averaged per base. <i>Base Norm</i> is normalized by dividing by the transcript's average coverage.\n</p>\n");
+        str.append("<td align='right'>"+m.getThreeEnd100() + "</td>");
+        str.append("<td align='right'>"+ String.format("%.3f",(m.getThreeEnd10()/ (m.getMeanCoverage()))) + "</td>");
+        str.append("<td align='right'>"+String.format("%.3f",(m.getThreeEnd50()/(m.getMeanCoverage()))) + "</td>");
+        str.append("<td align='right'>"+String.format("%.3f",(m.getThreeEnd100()/(m.getMeanCoverage()))) + "</td>");
+        str.append("</tr>\n</table>\n");
+
+        str.append("<p>End coverage is averaged per base. <i>Base Norm</i> is normalized by dividing by the transcript's average coverage.\n</p>\n");
 
         // ***************************************************************
         // GAPS
-		str.append("<h3>Gaps</h3>\n");
+        str.append("<h3>Gaps</h3>\n");
 
-		str.append("<table>");
-		str.append("<tr><td>Number of Gaps:</td><td align='right'>"+m.getNumberOfGaps()+"</td></tr>");
-		str.append("<tr><td>Cumulative Gap Length:</td><td align='right'>");
-		str.append(""+m.getCumulativeGapLength());
-		str.append("</td></tr><tr><td>Gap Percentage:</td><td align='right'>");
-		str.append(""+String.format("%.1f",(m.getGapRatio() * 100f))+"%");
-		str.append("</td></tr><tr><td>Average Coverage:</td><td align='right'>");
-		str.append(String.format("%.2f",m.getMeanCoverage()));
-		str.append("</td>\n");
-			
-		str.append("</tr></table>\n");
+        str.append("<table>");
+        str.append("<tr><td>Number of Gaps:</td><td align='right'>"+m.getNumberOfGaps()+"</td></tr>");
+        str.append("<tr><td>Cumulative Gap Length:</td><td align='right'>");
+        str.append(""+m.getCumulativeGapLength());
+        str.append("</td></tr><tr><td>Gap Percentage:</td><td align='right'>");
+        str.append(""+String.format("%.1f",(m.getGapRatio() * 100f))+"%");
+        str.append("</td></tr><tr><td>Average Coverage:</td><td align='right'>");
+        str.append(String.format("%.2f",m.getMeanCoverage()));
+        str.append("</td>\n");
+        str.append("</tr></table>\n");
 
-		str.append("<p>A gap is defined as a stretch of at least " +TranscriptDoCResult.MIN_GAP_SIZE+" bases having a coverage of no more than " + TranscriptDoCResult.MAX_COV_FOR_GAP+ "\n</p>\n");
-			
-			
-		// ***************************************************************
+        str.append("<p>A gap is defined as a stretch of at least " +TranscriptDoCResult.MIN_GAP_SIZE+" bases having a coverage of no more than " + TranscriptDoCResult.MAX_COV_FOR_GAP+ "\n</p>\n");
+
+        // ***************************************************************
         // OTHER STUFF (intervals, geneId, biotype, gc content, sequence	
-		str.append("<h3>Genomic Intervals</h3>"+g.getExonList() + "<br>\n");
+        str.append("<h3>Genomic Intervals</h3>"+g.getExonList() + "<br>\n");
 
-		str.append("<h3>Other Annotations</h3>\n");
-		str.append("<table><tr><td>Gene ID:</td><td>");
-		str.append("<a target='_new' href='"+ENSEMBL_BASEURL + g.getAnnotation().getGeneId() + "'>" + g.getAnnotation().getGeneId() + "</a>");
-		str.append("</td></tr><tr><td>Strand:</td><td>");
-		str.append(g.getAnnotation().getStrand());
-		str.append("</td></tr><tr><td>Type:</td><td>");
-		str.append(g.getAnnotation().getType());
+        str.append("<h3>Other Annotations</h3>\n");
+        str.append("<table><tr><td>Gene ID:</td><td>");
+        str.append("<a target='_new' href='"+ENSEMBL_BASEURL + g.getAnnotation().getGeneId() + "'>" + g.getAnnotation().getGeneId() + "</a>");
+        str.append("</td></tr><tr><td>Strand:</td><td>");
+        str.append(g.getAnnotation().getStrand());
+        str.append("</td></tr><tr><td>Type:</td><td>");
+        str.append(g.getAnnotation().getType());
         str.append("</td></tr>");
-        if(useGC){
+        if(useGC) {
             str.append("<tr><td>GC Content:</td><td>");
             str.append(g.getAnnotation().getGCContent());
             str.append("</td></tr>");
         }
         str.append("</table>\n");
-        if((new File(g.getTranscriptId()+".png")).exists())
-        {
+        if((new File(g.getTranscriptId()+".png")).exists()) {
             str.append("<img src = '"+g.getTranscriptId()+".png'><br>");
-		    str.append("<br>\n");
+            str.append("<br>\n");
         }
         // sequence
         str.append("<p>\n");
         str.append(g.getAnnotation().getSequence());
         str.append("\n</p>\n");
-		
-		return str.toString();
-	}
+
+        return str.toString();
+    }
 
 
 
-	/**
-	 * Creates a png plot using GNUPlot 
-	 * It opens gnuplot as a process and steams the commands to it
-	 * 
-	 * Because of the storage requirements for creating so many plots, the number is restricted to MAX_GNUPLOTS
-	 * @throws IOException
-	 * @throws InterruptedException 
-	 */
-	private void createGNUPlots(TranscriptList transcripts, String sampleDir) throws IOException, InterruptedException {
-		File dir = new File(sampleDir);
-		ProcessBuilder pb = new ProcessBuilder("gnuplot","-persist"); 
-		pb.redirectErrorStream(true);
-		Process pro = pb.start();
-		
-		// create thread to read out the standard out
-		IOTools.StdOGobbler gobbler = new IOTools.StdOGobbler(pro);
-		gobbler.start();
-		
-		// pipe commands into process:
-		OutputStreamWriter out = new OutputStreamWriter(pro.getOutputStream());
-		ArrayList<String> tempFiles = new ArrayList<String> (MAX_GNUPLOTS);
-		int count = 0;
-		for (Transcript gene: transcripts){
-			String f = gene.getTranscriptId() + ".DoC";
-			// make it output to a png:
-			out.write("set terminal png;\n");
+    /**
+     * Creates a png plot using GNUPlot
+     * It opens gnuplot as a process and steams the commands to it
+     *
+     * Because of the storage requirements for creating so many plots, the number is restricted to MAX_GNUPLOTS
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private void createGNUPlots(TranscriptList transcripts, String sampleDir) throws IOException, InterruptedException {
+        File dir = new File(sampleDir);
+        ProcessBuilder pb = new ProcessBuilder("gnuplot","-persist");
+        pb.redirectErrorStream(true);
+        Process pro = pb.start();
 
-			// set axis labels
-			out.write("set xlabel \"Position in Gene\"\n");
-			out.write("set ylabel \"Coverage\"\n");
-			out.write("set yrange [0:1000]\n");
-			
-			// set exon arrows:
-			for (Integer border: gene.getLocalExonBoundries()){
-				out.write("set arrow from " + border + ", 0 to " +border +",100 lt 5 \n");
-			}
-			
-			if (gene.getAnnotation().isReverseStrand()){
-				out.write("set xrange [] reverse;\n");
-			}
-			
-			String pngName = dir.getAbsolutePath() + "/" + f.replace(".DoC", ".png");
-			//echo "set terminal png;set output 'test.png';plot 'ENST00000084795.DoC' using 4" | gnuplot -persist
-			out.write("set output '"+pngName+"';\n");
-			
-			// plot command:
-			out.write("plot '");
-			out.write(dir.getAbsolutePath()+"/"+f);
-			out.write("' using 1 notitle with linespoints\n");
-			
-			// reset to clear exons for next loop:
-			out.write("reset\n");
+        // create thread to read out the standard out
+        IOTools.StdOGobbler gobbler = new IOTools.StdOGobbler(pro);
+        gobbler.start();
+
+        // pipe commands into process:
+        OutputStreamWriter out = new OutputStreamWriter(pro.getOutputStream());
+        ArrayList<String> tempFiles = new ArrayList<String> (MAX_GNUPLOTS);
+        int count = 0;
+        for (Transcript gene: transcripts){
+            String f = gene.getTranscriptId() + ".DoC";
+            // make it output to a png:
+            out.write("set terminal png;\n");
+
+            // set axis labels
+            out.write("set xlabel \"Position in Gene\"\n");
+            out.write("set ylabel \"Coverage\"\n");
+            out.write("set yrange [0:1000]\n");
+
+            // set exon arrows:
+            for (Integer border: gene.getLocalExonBoundries()){
+                out.write("set arrow from " + border + ", 0 to " +border +",100 lt 5 \n");
+            }
+
+            if (gene.getAnnotation().isReverseStrand()){
+                out.write("set xrange [] reverse;\n");
+            }
+
+            String pngName = dir.getAbsolutePath() + "/" + f.replace(".DoC", ".png");
+            //echo "set terminal png;set output 'test.png';plot 'ENST00000084795.DoC' using 4" | gnuplot -persist
+            out.write("set output '"+pngName+"';\n");
+
+            // plot command:
+            out.write("plot '");
+            out.write(dir.getAbsolutePath()+"/"+f);
+            out.write("' using 1 notitle with linespoints\n");
+
+            // reset to clear exons for next loop:
+            out.write("reset\n");
 
             // add file to delete list
             tempFiles.add(dir.getAbsolutePath() + "/" + f);
             // break is over max
-			count++;
-			if (count > MAX_GNUPLOTS) break;
-		} // end of genes (and plots)
-		
-		out.close();
-		gobbler.join();
+            count++;
+            if (count > MAX_GNUPLOTS) break;
+        } // end of genes (and plots)
+
+        out.close();
+        gobbler.join();
 
         for (String file: tempFiles){
             // we can down delete the DoC file for this transcript since we don't need it any more
@@ -536,6 +463,7 @@ public class PerBaseDoC {
             docFile.delete();
         }
 	}
+
 
     /**
      * Reads in the DoC data into an indexed list of coordinates.
@@ -548,10 +476,10 @@ public class PerBaseDoC {
      * @param transcripts   after the call to this method, the transcript object contain all the doc results for that transcript
      * @throws IOException
      */
-	private void splitDoCResultsByGene(String docResultFile,
-			Collection<Transcript> transcripts, String sampleDir, boolean writeSplitsToFile) throws IOException{
-		// first load the positions and their values into a hash table
+    private void splitDoCResultsByGene(String docResultFile,
+            Collection<Transcript> transcripts, String sampleDir, boolean writeSplitsToFile) throws IOException{
 
+        // first load the positions and their values into a hash table
         HashMap<String, String> docMap = indexDoCResults(docResultFile);
 
         // now we have a map of all the coordinates and their doc result values.
@@ -576,20 +504,19 @@ public class PerBaseDoC {
                 perfT = new Performance("Processed " +(count-1000)+" - " + count, Performance.Resolution.minutes);
             }
             TranscriptDoCResult docResult = new TranscriptDoCResult(t.getTranscriptId(),t.getAnnotation().getStrand());
-            //results.add(docResult);
             Collection<int[]> exons = t.exons;
-            for (int[] exon: exons){
-                for (int pos = exon[0]; pos <= exon[1]; pos++){
+            for (int[] exon: exons) {
+                for (int pos = exon[0]; pos <= exon[1]; pos++) {
                     // for each position, we look up the data
                     //construct coordinate from position:
 
                     String coord = t.getChr() +":" +pos;
 
                     String dataLine = docMap.get(coord);
-                    if (dataLine == null || dataLine.equals("")){
+                    if (dataLine == null || dataLine.equals("")) {
                         //throw new RuntimeException("No DoC data found for "+t.getTranscriptId()+", " + coord + " in file: " + docResultFile);
                         //System.out.println("Warning, no DoC data found for "+t.getTranscriptId()+", " + coord + " in file: " + docResultFile);
-                    }else{
+                    } else {
                         docResult.addLine(t.getTranscriptId()+"\t"+t.getAnnotation().getName()+"\t"+dataLine);
                     }
                 }
@@ -601,7 +528,9 @@ public class PerBaseDoC {
             // this is the last chance to do anything with the actual result values. so we output them for GNUPlot
             if (docSplitCount < MAX_GNUPLOTS){
                 docSplitCount++;
-                if (writeSplitsToFile) docResult.writeToFile(sampleDir);
+                if (writeSplitsToFile) {
+                    docResult.writeToFile(sampleDir);
+                }
             }
             DoCMetrics mets = t.getDoCMetrics();
 
@@ -609,19 +538,19 @@ public class PerBaseDoC {
             out.write(""+mets.getMeanCoverage()); out.write('\t');
             out.write(""+mets.getFiveEnd400()); out.write('\t');
             out.write(""+mets.getThreeEnd400()); out.write('\t');
-            if(mets.getFiveEnd400()>0){
+            if (mets.getFiveEnd400()>0) {
                 float five = mets.getFiveEnd400();
                 float three = mets.getThreeEnd400();
                 out.write(""+three/five);
-            }else{
+            } else {
                 out.write("NA");
             }
             out.write('\n');
         }
         out.close();
         System.out.println(perf);
+    }
 
-	}
 
     /**
      * indexes the doc results (coverage) by coordinate
@@ -631,10 +560,10 @@ public class PerBaseDoC {
         Performance perf = new Performance("Indexing DoC result file: " + docResultFile);
         //System.out.println("(heap is " + Runtime.getRuntime().totalMemory()+")");
 
-		BufferedReader in = new BufferedReader (new FileReader(docResultFile));
+        BufferedReader in = new BufferedReader (new FileReader(docResultFile));
 
-		String header = in.readLine();
-		String line = in.readLine(); // skipping header
+        String header = in.readLine();
+        String line = in.readLine(); // skipping header
         while (line != null){
             String[] split = line.split("\\t");
             String coord = split[0];
@@ -642,7 +571,6 @@ public class PerBaseDoC {
 //            int pos = Integer.parseInt(split[0].substring(split[0].indexOf(':')+1));
 
             docMap.put(coord,line);
-
             line = in.readLine();
         }
         in.close();
@@ -653,6 +581,7 @@ public class PerBaseDoC {
         perf = new Performance("Created TranscriptDoCResults for " + docResultFile);
         return docMap;
     }
+
 
 //    private static Transcript getGeneForPosition(Collection<Transcript> transcripts,String chr, int pos) {
 //		Transcript found = null;
@@ -695,8 +624,6 @@ public class PerBaseDoC {
 //	}
 
 
-
-
 	/**
 	 * Reads through the expression file to find the MAX-best entries by saving them in a linked list
 	 * The file has the form:
@@ -706,54 +633,45 @@ public class PerBaseDoC {
      * @param infile
      * @param idCol
      *@param expCol @return
-	 * @throws IOException
-	 */
-	private static TranscriptList readTranscripts(String infile, int cap, int idCol, int expCol) throws IOException{
-		BufferedReader in = new BufferedReader(new FileReader (infile));
+     * @throws IOException
+     */
+    private static TranscriptList readTranscripts(String infile, int cap, int idCol, int expCol) throws IOException{
+        BufferedReader in = new BufferedReader(new FileReader (infile));
+        LinkedList<Transcript> ll = new LinkedList<Transcript>();
 
+        String line = in.readLine();
+        int lineCount=1;
+        line = in.readLine(); //skipping header
+        while (line!=null){
+            String[] split = line.split("\\t");
+            double avCov = Double.parseDouble(split[expCol]);
 
-		LinkedList<Transcript> ll = new LinkedList<Transcript>();
+            int i =0;
+            if (ll.size()>0){
+                float thisAvCov;
+                do {
+                    thisAvCov =ll.get(i).getExpression();
+                    if(thisAvCov < avCov)i++;
+                }while (thisAvCov < avCov && i < ll.size());
+            }
 
-		String line = in.readLine();
-		int lineCount=1;
-		line = in.readLine(); //skipping header
-		while (line!=null){
-			String[] split = line.split("\\t");
-			double avCov = Double.parseDouble(split[expCol]);
+            ll.add(i,new Transcript(split[idCol],Float.parseFloat(split[expCol])));
+            if (ll.size() > cap){
+                ll.remove(0);
+            }
 
-			int i =0;
-			if (ll.size()>0){
-				float thisAvCov;
-				do {
-					thisAvCov =ll.get(i).getExpression();
-					if(thisAvCov < avCov)i++;
-				}while (thisAvCov < avCov && i < ll.size());
-			}
+            line = in.readLine();
+            lineCount++;
+        }
+        in.close();
 
-			ll.add(i,new Transcript(split[idCol],Float.parseFloat(split[expCol])));
-			if (ll.size() > cap){
-				ll.remove(0);
-				//System.out.println("" + lineCount +":size/min/max:"+ ll.size() + " / " +ll.get(0)[SIG_COL]+ " / " +ll.get(ll.size()-1)[SIG_COL]);
-			}
-
-
-			line = in.readLine();
-			lineCount++;
-		}
-
-		in.close();
-		
-		// reverse order:
-		TranscriptList reverse = new TranscriptList();
-		for (int i = ll.size()-1; i >=0; i--){
-			reverse.add(ll.get(i));
-		}
-		return reverse;
-	}
-
-
-
-
+        // reverse order:
+        TranscriptList reverse = new TranscriptList();
+        for (int i = ll.size()-1; i >=0; i--){
+            reverse.add(ll.get(i));
+        }
+        return reverse;
+    }
 
 
     /**
@@ -766,10 +684,8 @@ public class PerBaseDoC {
 
         System.out.println("Stratifying Transcripts By Expression");
 
-
         GCTFile gct = new GCTFile(gctFile);
-
-        for (RNASeqMetrics.MetricSample b: samples){ // sample id, bam file, notes
+        for (RNASeqMetrics.MetricSample b: samples) { // sample id, bam file, notes
             String sampId = b.sampId;
 
             String[] stratifiedTranscripts = getExprStratifiedTranscripts( n, gct.getTranscripts(sampId), lowerExprCutoff);
@@ -793,15 +709,14 @@ public class PerBaseDoC {
             String highExprFile =b.getExpressionList(ExpressionLevel.high);
             IOTools.stringToFile(highExprFile,stratifiedTranscripts[2]);
 
-            //all expression
-            dir = new File(b.getExpressionDir(ExpressionLevel.all));
-            dir.mkdir();
-            String allExprFile =b.getExpressionList(ExpressionLevel.all);
-            IOTools.stringToFile(allExprFile,stratifiedTranscripts[3]);
-
+            // //all expression
+            // dir = new File(b.getExpressionDir(ExpressionLevel.all));
+            // dir.mkdir();
+            // String allExprFile =b.getExpressionList(ExpressionLevel.all);
+            // IOTools.stringToFile(allExprFile,stratifiedTranscripts[3]);
         }
-
     }
+
 
     /**
      *
@@ -815,62 +730,43 @@ public class PerBaseDoC {
     private static String[] getExprStratifiedTranscripts(int numberOfTranscripts, ArrayList<GCTFile.GCTEntry> transcripts, float LOWER_EXPR_CUTOFF) throws IOException{
         String[] lists = new String[4];
 
-        // cuttoff for "expressed" .... 0.1
-
         ArrayList<GCTFile.GCTEntry> expressed = GCTFile.GCTEntry.sortExpressed(transcripts, LOWER_EXPR_CUTOFF);
 
         System.out.println("Number of expressed transcripts at this cuttoff: \t"+expressed.size());
 
         StringBuilder list = new StringBuilder();
-
-        for (int i = 0 ; i < numberOfTranscripts && i < expressed.size(); i ++){
+        for (int i = 0 ; i < numberOfTranscripts && i < expressed.size(); i ++) {
             list.append(expressed.get(i).getId()).append('\n');
         }
-
         lists[0] = list.toString();
-
-
         list = new StringBuilder();
-
         int mid = expressed.size()/2;
         int start = Math.max(0, mid-(numberOfTranscripts/2));
         int stop = Math.min(expressed.size(),start+numberOfTranscripts);
-        for (int i = start ; i < stop; i ++){
+        for (int i = start ; i < stop; i ++) {
             list.append(expressed.get(i).getId()).append('\n');
         }
-
         lists[1] = list.toString();
-
-
         list = new StringBuilder();
-
-        for (int i = expressed.size()-1 ; i >= (expressed.size()-numberOfTranscripts) && i >=0; i --){
+        for (int i = expressed.size()-1 ; i >= (expressed.size()-numberOfTranscripts) && i >=0; i --) {
             list.append(expressed.get(i).getId()).append('\n');
         }
-
         lists[2] = list.toString();
-
         list = new StringBuilder();
-
-        for (int i = 0 ; i < expressed.size(); i ++){
+        for (int i = 0 ; i < expressed.size(); i ++) {
             list.append(expressed.get(i).getId()).append('\n');
         }
 
         lists[3] = list.toString();
-
-
         return lists;
-
     }
-
 
 
     public void prepareIntervals(String transcriptGTF, String transcriptTypeField) throws IOException {
         prepareIntervals( ExpressionLevel.low, transcriptGTF, transcriptTypeField);
         prepareIntervals(ExpressionLevel.medium, transcriptGTF,  transcriptTypeField);
         prepareIntervals(ExpressionLevel.high, transcriptGTF,  transcriptTypeField);
-        prepareIntervals(ExpressionLevel.all, transcriptGTF,  transcriptTypeField);
-
+        // prepareIntervals(ExpressionLevel.all, transcriptGTF,  transcriptTypeField);  // breaks pre-1.1.9 version
     }
 
     /**
@@ -885,11 +781,9 @@ public class PerBaseDoC {
      */
     public void prepareIntervals(ExpressionLevel level, String transcriptGTF, String transcriptTypeField) throws IOException {
 
-
-        for (RNASeqMetrics.MetricSample b: samples){ // sample id, bam file, notes
+        for (RNASeqMetrics.MetricSample b: samples) { // sample id, bam file, notes
 
             System.out.println("Expression file for DoC:\t"+ b.getExpressionList(level));
-
             PerBaseDoC.cleanDir(b.getExpressionDir(level));
 
             // get MAX best transcripts from expression file
@@ -901,7 +795,6 @@ public class PerBaseDoC {
             Performance perf = new Performance("Interval Loading");
             System.out.println("Preparing intervals for " + transcripts.size() + " transcripts");
 
-
             TranscriptList fullTrans = TranscriptList.loadGTF(transcriptGTF,transcriptTypeField);
 
             transcripts.loadIntervalsAndAnnotation(fullTrans);
@@ -911,36 +804,32 @@ public class PerBaseDoC {
             System.out.println("Creating interval list");
 
             Transcript.createIntervalFile(transcripts,b.getIntervalFile(level));
-
-
         }
-
-
     }
+
 
     public void runDoC(String refGenomeFile) throws Exception {
         runDoC(refGenomeFile,null,null,false); // no downsampling
     }
 
+
     public void runDoC(String refGenomeFile, String dSamplingTarget, String additionalFlags, boolean runOnAll) throws Exception {
         runDoC(refGenomeFile, ExpressionLevel.low, dSamplingTarget, additionalFlags);
         runDoC(refGenomeFile,ExpressionLevel.medium, dSamplingTarget, additionalFlags);
         runDoC(refGenomeFile,ExpressionLevel.high, dSamplingTarget, additionalFlags);
-        if(runOnAll)
-            runDoC(refGenomeFile,ExpressionLevel.all, dSamplingTarget, additionalFlags);
+        // if (runOnAll) {  // breaks pre-1.1.9 version
+        //     runDoC(refGenomeFile,ExpressionLevel.all, dSamplingTarget, additionalFlags);
+        // }
     }
 
 
     public void runDoC(String refGenomeFile,ExpressionLevel level, String dSamplingTarget, String additionalFlags_) throws Exception {
-
 
         for (RNASeqMetrics.MetricSample b: samples){ // sample id, bam file, notes
 
             String intervalFile = b.getIntervalFile(level);
             // run DoC
             String docResults = b.getDoCResultsFile(level);
-
-
             String finalFlags = additionalFlags_;
             //-rf Downsampling -numReads 2000 -targetReads 1000
             String dSampleOption = null;
@@ -948,22 +837,19 @@ public class PerBaseDoC {
                 int totReads = b.getTotalReads();
                 System.out.println("Coverage Metrics are being downsampled from " +totReads +" + for sample: " + b.sampId);
                 dSampleOption = "-rf Downsampling -numReads " + totReads + " -targetReads " + dSamplingTarget;
-                if (finalFlags == null){
+                if (finalFlags == null) {
                     finalFlags= dSampleOption;
-                }else{
+                } else {
                     finalFlags += " " + dSampleOption;
                 }
             }
 
-
-            if (!noGatk){
-                
+            if (!noGatk) {
                 GATKTools.runDoC(refGenomeFile, b.getBamFileOrList(), docResults, intervalFile, false, finalFlags);
-            }else{
+            } else {
                 System.out.println("GATK DoC suppressed");
             }
         }
-
     }
 
 
@@ -978,8 +864,7 @@ public class PerBaseDoC {
         createReports(transcriptGTF, transcriptTypeField, ExpressionLevel.low, detailedHTML, gcFile, endLength);
         createReports(transcriptGTF, transcriptTypeField, ExpressionLevel.medium, detailedHTML, gcFile, endLength);
         createReports(transcriptGTF, transcriptTypeField, ExpressionLevel.high, detailedHTML, gcFile, endLength);
-        createReports(transcriptGTF, transcriptTypeField, ExpressionLevel.all, detailedHTML, gcFile, endLength);
-
+        // createReports(transcriptGTF, transcriptTypeField, ExpressionLevel.all, detailedHTML, gcFile, endLength);
     }
 
     private void createReports(String transcriptGTF, String transcriptTypeField,ExpressionLevel level,  boolean detailedHTML, String gcFile, String endLength) throws IOException {
@@ -992,7 +877,6 @@ public class PerBaseDoC {
 
         // creates a single file per expression level with the data used in the gap length histograms
         agglomerateGapLengthHisograms(level);
-
 
         // creates an HTML page for each sample and coverage stratification
         createDoCPages(level, detailedHTML);
@@ -1013,14 +897,11 @@ public class PerBaseDoC {
         TranscriptList fullTrans = TranscriptList.loadGTF(transcriptGTF,transcriptTypeField);
         for (RNASeqMetrics.MetricSample b: samples){ // sample id, bam file, notes
 
-            //String intervalFile =sampleDir+"/intervals.list";
-
-            
             System.out.println("Loading transcripts");
             TranscriptList transcripts = Transcript.readTranscriptsFromList(b.getExpressionList(level));
 
             transcripts.loadIntervalsAndAnnotation(fullTrans);
-            if(gcFile !=null){
+            if (gcFile !=null) {
                 //populate transcripts with GC content information
                 transcripts.populateGC(gcFile);
             }
@@ -1030,9 +911,7 @@ public class PerBaseDoC {
 
 
             Performance perf = new Performance("Mapped intervals back to transcripts",Performance.Resolution.seconds);
-
             splitDoCResultsByGene(b.getDoCResultsFile(level),transcripts, b.getExpressionDir(level), detailedHTML); // outDir is just for making GNUPlot input files
-
             System.out.println(perf);
 
             //create data on the averaage coverage at each position relative to 3' end
@@ -1041,22 +920,19 @@ public class PerBaseDoC {
             calculateAverageCoverageByNormalizedPosition(transcripts, b.getMeanCoverageByPosNormalizedFile(level));
             calculateGapLengthHistogram(transcripts,b.getGapLengthHistogramFile(level));
 
-
             // at this point the transcripts contain the doc Result info
-
-
             transcripts.toFile(b.getDoCTranscriptsResultsFile(level), endLength, gcFile != null, detailedHTML);
 
-            if (detailedHTML){
+            if (detailedHTML) {
                 //create GNU Plots:
                 System.out.println("Creating Plots");
-                try{
+                try {
                     createGNUPlots(transcripts, b.getExpressionDir(level));
-                }catch(IOException e){
+                } catch(IOException e){
                     System.out.println("\nCould not run GNUPlot. Coverage plots for individual transcripts will not be created.\n");
-                }catch (RuntimeException e){
+                } catch (RuntimeException e){
                     System.out.println("\nCould not run GNUPlot. Coverage plots for individual transcripts will not be created.\n");
-                }catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     System.out.println("\nGNUPlot Interrupted. Coverage plots for individual transcripts will not be created.\n");
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
@@ -1067,8 +943,8 @@ public class PerBaseDoC {
 
             transcripts.toSummaryFile(b.getDoCTranscriptsSummaryResultsFile(level));
         }
-
     }
+
 
     /**
      * the output file will look like OUT_DIR+"/lowexpr/meanCoverage.txt"
@@ -1093,8 +969,7 @@ public class PerBaseDoC {
 
             //add a new series to the plot
             XYSeries xySeries = new XYSeries(sampId);
-            for(int r =0;r<table[i].size();r++)
-            {
+            for(int r =0;r<table[i].size();r++) {
                 double value = Double.parseDouble(table[i].get(r));
                 xySeries.add(r+1, value);
             }
@@ -1103,7 +978,7 @@ public class PerBaseDoC {
         }
         out.write('\n');
 
-        for (int row = 0 ; row < length; row++){
+        for (int row = 0 ; row < length; row++) {
             for (int sampDex = 0 ; sampDex < table.length; sampDex++){
                 out.write(table[sampDex].get(row)); out.write('\t');
             }
@@ -1117,6 +992,7 @@ public class PerBaseDoC {
                               (null, "Distance from 3'", "Mean Coverage", xySeriesCollection, PlotOrientation.VERTICAL, true, true, false);
         saveImage(meanCoveragePlot, new File(this.outDir + "/meanCoverage_"+level+".png"));
     }
+
 
     /**
      * the output file will look like OUT_DIR+"/lowexpr/meanCoverage.txt"
@@ -1141,8 +1017,7 @@ public class PerBaseDoC {
 
             //add a new series to the plot
             XYSeries xySeries = new XYSeries(sampId);
-            for(int r =0;r<table[i].size();r++)
-            {
+            for(int r =0;r<table[i].size();r++) {
                 double value = Double.parseDouble(table[i].get(r));
                 xySeries.add(r+1, value);
             }
@@ -1151,7 +1026,7 @@ public class PerBaseDoC {
         }
         out.write('\n');
 
-        for (int row = 0 ; row < length; row++){
+        for (int row = 0 ; row < length; row++) {
             for (int sampDex = 0 ; sampDex < table.length; sampDex++){
                 out.write(table[sampDex].get(row)); out.write('\t');
             }
@@ -1176,12 +1051,11 @@ public class PerBaseDoC {
 
         //set up data for plot
         XYSeriesCollection xySeriesCollection = new XYSeriesCollection();
-
         ArrayList<String>[] table= new ArrayList[samples.size()];
 
         BufferedWriter out = new BufferedWriter(new FileWriter(this.outDir + "/gapLengthHist_"+level+".txt" ));
         int length = 0;
-        for (int i = 0 ; i < table.length; i++){
+        for (int i = 0 ; i < table.length; i++) {
             String sampId = samples.get(i).sampId;
             table[i] = IOTools.fileToList(samples.get(i).getGapLengthHistogramFile(level), null);
             length = table[i].size();
@@ -1190,8 +1064,7 @@ public class PerBaseDoC {
 
             //add a new series to the plot
             XYSeries xySeries = new XYSeries(sampId);
-            for(int r =0;r<table[i].size();r++)
-            {
+            for(int r =0;r<table[i].size();r++) {
                 double value = Double.parseDouble(table[i].get(r));
                 xySeries.add(r+1, value);
             }
@@ -1200,8 +1073,8 @@ public class PerBaseDoC {
         }
         out.write('\n');
 
-        for (int row = 0 ; row < length; row++){
-            for (int sampDex = 0 ; sampDex < table.length; sampDex++){
+        for (int row = 0 ; row < length; row++) {
+            for (int sampDex = 0 ; sampDex < table.length; sampDex++) {
                 out.write(table[sampDex].get(row)); out.write('\t');
             }
             out.write('\n');
@@ -1216,22 +1089,15 @@ public class PerBaseDoC {
     }
 
 
-
-
-
-
-    public static void saveImage(JFreeChart chart, File file)
-    {
+    public static void saveImage(JFreeChart chart, File file) {
 
         ChartPanel panel = new ChartPanel(chart);
         Dimension size = panel.getPreferredSize();
 
-        try
-        {
+        try {
             ChartUtilities.saveChartAsPNG(file, chart, size.width, size.height);
         }
-        catch(IOException io)
-        {
+        catch(IOException io) {
             io.printStackTrace();
             System.err.println("Unable to save the image file " + file);
         }
@@ -1247,33 +1113,28 @@ public class PerBaseDoC {
      */
     private void createDoCPages(ExpressionLevel level, boolean link) throws IOException {
 
-
-        for (RNASeqMetrics.MetricSample samp: this.samples){
+        for (RNASeqMetrics.MetricSample samp: this.samples) {
             String sampleId = samp.sampId;
 
-            
             // output all the transcripts in a big table
             BufferedWriter out = new BufferedWriter(new FileWriter(samp.getExpressionDir(level)+"/index.html"));
             out.write("<html>\n<head><title>"+sampleId+"</title>\n\t"+RNASeqMetrics.getStyle()+"\n\t</head>\n<body>");
             out.write("<h1>"+sampleId+"</h1\n");
             out.write("<p>\n<h2>Data Files</h2>\n");
             out.write("<dl>\n");
-            if((new File(samp.getExpressionDir(level)+"../" + sampleId+".metrics.txt")).exists())
-            {
+            if((new File(samp.getExpressionDir(level)+"../" + sampleId+".metrics.txt")).exists()) {
                 out.write("     <dt><a href='../../"+sampleId+"/"+sampleId+".metrics.txt'>Read Count Metrics</a></dt>");
                 out.write("     <dd>Tab delimited text file of the read count-based metrics for this sample.</dd>\n");
             }
 
             System.out.println("Library size link path" + new File(samp.getExpressionDir(level) + "../"));
-            if((new File(samp.getExpressionDir(level)+"../" + sampleId+".libraryComplexity.txt")).exists())
-            {
+            if((new File(samp.getExpressionDir(level)+"../" + sampleId+".libraryComplexity.txt")).exists()) {
                 out.write("     <dt><a href='../../"+sampleId+"/"+sampleId+".libraryComplexity.txt'>Library Complexity Metrics</a></dt>");
                 out.write("     <dd>Contains estimated library size, number of read pairs, unpaired reads, etc.</dd>\n");
             }
 
             System.out.println("Absolute path to metrics.tmp.txt" + (new File("../" + samp.getExpressionDir(level)+"/" + sampleId+".metrics.tmp.txt.rpkm.gct").getAbsolutePath()));
-            if((new File(samp.getExpressionDir(level)+"../" + sampleId+".metrics.tmp.txt.rpkm.gct")).exists())            
-            {
+            if ((new File(samp.getExpressionDir(level)+"../" + sampleId+".metrics.tmp.txt.rpkm.gct")).exists()) {
                 out.write("     <dt><a href='../../"+sampleId+"/"+sampleId+".metrics.tmp.txt.rpkm.gct'>Expression File</a></dt>");
                 out.write("     <dd>GCT file containing the expression levels of this sample in RPKM</dd>\n");
             }
@@ -1285,14 +1146,13 @@ public class PerBaseDoC {
             out.write("</dl>\n");
             out.write("</p>\n");
 
-            if(link){
+            if (link) {
                 out.write("<p>");
                 out.write("<a href='./plots.html'>View All Plots</a>");
                 out.write("</p>");
             }
 
             out.write("<h2>Transcript Details</h2>\n");
-
 
             out.write(IOTools.tableFileToHTML(samp.getDoCTranscriptsResultsFile(level)));
             out.write("<p class='tLegend'>\n");
@@ -1303,12 +1163,9 @@ public class PerBaseDoC {
             out.write("\n</p>\n");
 
             out.write("<h5>"+new Date()+"</h5>\n");
-
             out.write("</body>\n</html>");
             out.close();
         }
-
     }
-
 
 }
