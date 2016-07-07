@@ -216,8 +216,8 @@ public class ReadCountMetrics {
             // replaced by "prepare for region counting ..
             Performance perf = new Performance("CountReadMetricsWalker Runtime", Performance.Resolution.minutes);
             String intervals = null;// "chr1:3530586-3534177";
-            // samp.getTmpMetricsFile() returns full path: <out_dir>/<sample_id>/<sample_id>.metrics.tmp.txt
-            GATKTools.runIntronReadCount(refGenome, samp.getBamFileOrList(), null, refGeneFile, samp.getTmpMetricsFile(), gatkFlags, strictMode);
+            // previously: samp.getTmpMetricsFile(), which returned full path: <out_dir>/<sample_id>/<sample_id>.metrics.tmp.txt
+            GATKTools.runIntronReadCount(refGenome, samp.getBamFileOrList(), null, refGeneFile, samp.getSampleDirectory()+"/"+samp.sampId, gatkFlags, strictMode);
             System.out.println(perf);
         }
     }

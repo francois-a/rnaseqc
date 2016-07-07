@@ -18,16 +18,16 @@ public class RNASeqMetrics {
     public static final float LOWER_EXPR_CUTOFF =  1f;
 
     private boolean noMetrics;
-    int MAX= 1000 ;
-    String SAMPLE_FILE ;
-    String TRANSCRIPT_MODEL ;
-    String REF_GENOME  ;
-    String OUT_DIR  ;
-    boolean details ;
+    int MAX = 1000;
+    String SAMPLE_FILE;
+    String TRANSCRIPT_MODEL;
+    String REF_GENOME;
+    String OUT_DIR;
+    boolean details;
     String gatkFlags = null;
     String transcriptTypeField ;
     String endLength;
-    String refGeneFile ;
+    String refGeneFile;
     String rRNAIntervals;
     String rRNAIntervalsCreationLocation;
     String rRNAFile;
@@ -43,7 +43,7 @@ public class RNASeqMetrics {
     private boolean singleEnd;
     private boolean isStrat;
     private boolean docAll = false;
-    private int rRNAdSampleTarget = 1000000; // 1 million
+    private int rRNAdSampleTarget = 1000000;
     private boolean gapLengthDistribution = false;
 
     ArrayList<HashMap<String,String>> metricTracker = new ArrayList<HashMap<String,String>>();
@@ -161,7 +161,7 @@ public class RNASeqMetrics {
         metrics.prepareFiles(); // makes the rout directory, does the GTF to refgene conversion, creates rRNA intervals, filters user defined GCT to match GTF
         metrics.runMetrics();
 
-        if(metrics.runDoC && cl.hasOption("strat") && !cl.getOptionValue("strat").equals("none")){
+        if (metrics.runDoC && cl.hasOption("strat") && !cl.getOptionValue("strat").equals("none")) {
             stratification(cl, argz);
         }
     }
@@ -207,7 +207,6 @@ public class RNASeqMetrics {
 
         String metricTable = null;
         if (!noMetrics) {
-
             ReadCountMetrics rcMetrics = new ReadCountMetrics(bams,OUT_DIR, LOWER_EXPR_CUTOFF);
             rcMetrics.runReadCountMetrics(REF_GENOME,refGeneFile, rRNAFile, this.singleEnd, this.bwa, this.rRNAdSampleTarget, this.skiprRNA, this.gatkFlags, this.strictMode);
 
@@ -216,13 +215,12 @@ public class RNASeqMetrics {
             if (theseSamplesGCT == null) theseSamplesGCT = gtc;
             // load and ouput metrics:
             metricTable = rcMetrics.getMetricsHTML(metricTracker);
-
         } else {
             System.out.println("Metrics suppressed");
         }
 
         String corrTable = null;
-        if(referenceGCTForCorr !=null || bams.size() > 1){
+        if (referenceGCTForCorr !=null || bams.size() > 1) {
             // run R to find the correlation between these rpkms and a given (e.g. affy) microarray
             String[] corFile = correlationComparison(referenceGCTForCorr, theseSamplesGCT, OUT_DIR);
 
@@ -240,9 +238,8 @@ public class RNASeqMetrics {
             }
         }
 
-        // DO DoC METRICS*********************************
         // create individual depth of coverage reports per sample
-        if(runDoC){
+        if (runDoC) {
             PerBaseDoC doc = new PerBaseDoC(bams, OUT_DIR);
 
             // this step slices up the transcripts by expression level
@@ -255,10 +252,9 @@ public class RNASeqMetrics {
             createTopLevelIndex(bams,MAX, metricTable, corrTable,endLength, OUT_DIR+"/index.html");
             if (!isStrat) createTopLevelIndex(bams,MAX, metricTable, corrTable,endLength, OUT_DIR+"/report.html");
         }
-
-        if(isStrat){
+        if (isStrat) {
             createTSV(bams, OUT_DIR+"/metrics_strat.tsv");
-        }else{
+        } else {
             createTSV(bams, OUT_DIR+"/metrics.tsv");
         }
     }
@@ -1176,9 +1172,9 @@ public class RNASeqMetrics {
 
 
     public static class MetricSample {
-        String sampId ;
-        String bamFile ;
-        String notes  ;
+        String sampId;
+        String bamFile;
+        String notes;
         String listFile = null;
         private String tmpMetricFile;
         private String sampDir;
@@ -1207,7 +1203,6 @@ public class RNASeqMetrics {
          * @throws IOException
          */
         public static ArrayList<MetricSample> readInSamples(String sampleFile, String outDir) throws IOException{
-
             if (sampleFile.contains("|")) {
                 return readInSamplesFromCL(sampleFile,outDir,"\\|");
             } else if (sampleFile.contains(",")) {
@@ -1220,8 +1215,7 @@ public class RNASeqMetrics {
             String line =in.readLine();
             line = in.readLine(); // skip header
             ArrayList<String> origSampOrder = new ArrayList<String>();
-
-            while (line !=null ) {
+            while (line!=null) {
                 if (!line.trim().startsWith("#") && !line.trim().equals("")) {
                     String[] split = line.split("\\t");
                     //trim
@@ -1242,7 +1236,6 @@ public class RNASeqMetrics {
             }
 
             ArrayList<MetricSample> finalSamps = new ArrayList<MetricSample>(origSampOrder.size());
-
             for (String s: origSampOrder) {
                 ArrayList<String[]> thisList = samples.get(s);
                 if (thisList.size() == 1) {
@@ -1279,7 +1272,6 @@ public class RNASeqMetrics {
         /**
          * creates the sample directories for all samples
          * names the temporary sample file for all samples
-         *
          */
         private static void prepare(ArrayList<MetricSample> samples, String outDir) {
             for (RNASeqMetrics.MetricSample samp: samples) {
@@ -1287,11 +1279,11 @@ public class RNASeqMetrics {
                 File dir = new File(sampDir);
                 dir.mkdir();
 
-                String tmpMetricFile =   outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.tmp.txt";
-                String rRNAMetricsFile = outDir+ "/" + samp.sampId +"/" + samp.sampId + ".rRNA_counts.txt";
-                String lcOutputFile =    outDir+ "/" + samp.sampId +"/" + samp.sampId + ".libraryComplexity.txt";
-                String metricsFile =     outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.txt";
-                String gctFile =         outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.tmp.txt.rpkm.gct";  // rename
+                String tmpMetricFile =   sampDir +"/" + samp.sampId + ".metrics.tmp.txt";
+                String rRNAMetricsFile = sampDir +"/" + samp.sampId + ".rRNA_counts.txt";
+                String lcOutputFile =    sampDir +"/" + samp.sampId + ".libraryComplexity.txt";
+                String metricsFile =     sampDir +"/" + samp.sampId + ".metrics.txt";
+                String gctFile =         sampDir +"/" + samp.sampId + ".transcripts.rpkm.gct";
 
                 samp.setSampDir(sampDir);
                 samp.setTmpMetricFile(tmpMetricFile);
@@ -1407,7 +1399,7 @@ public class RNASeqMetrics {
         }
 
         public String getDoCTranscriptsResultsFile(PerBaseDoC.ExpressionLevel level) {
-            return getExpressionDir(level) +sampId+".DoCTranscripts";
+            return getExpressionDir(level)+sampId+".DoCTranscripts";
         }
 
         public String getDoCTranscriptsSummaryResultsFile(PerBaseDoC.ExpressionLevel level) {

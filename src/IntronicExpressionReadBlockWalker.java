@@ -41,26 +41,26 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
     public void initialize() {
         super.initialize();
         try {  // open outputfile
-            this.intronReportFile = super.OUT_FILE+".intronReport.txt";
+            this.intronReportFile = super.OUT_FILE+".exon_intron_report.txt";
             out = new BufferedWriter(new FileWriter(this.intronReportFile));
             // Transcript ID | gene name | Number of reads in exons | Total exon length | Exon reads per base | Number of reads in introns |
             // Total intron length | Intron reads per base | Peak intron index | Peak intron read count | Peak intron length | Peak intron reads per base
             // Duplicate exon reads | Split reads
             out.write("Transcript\tGene_Name\tExon_Reads\tExon_Length\tExon_r/b\tIntron_Reads\tIntron_Length\tIntron_r/b\tPeak_Intron_Idx\tPeak_Intron_Reads\tPeak_Intron_Length\tPeak_Intron_r/b\tDuplicate_Exon_Reads\tSplit_Reads\n");
 
-            intronOnlyReportFile = super.OUT_FILE+".intronReport.txt"+"_intronOnly.txt";
+            intronOnlyReportFile = super.OUT_FILE+".intron_report.txt";
             iOut = new BufferedWriter(new FileWriter(intronOnlyReportFile));
             // Intron ID | Transcript ID | Gene name| Number of reads in introns | Total intron length | Intron reads per base |
             // Flanking exons reads | Flanking exons length
             iOut.write("Intron\tTranscript\tGene_Name\tIntron_Reads\tIntron_Length\tIntron_r/b\tFlanking_Exons_Reads\tFlanking_Exons_Length\n");
 
-            exonOnlyReportFile = super.OUT_FILE+".intronReport.txt"+"_exonOnly.txt";
+            exonOnlyReportFile = super.OUT_FILE+".exon_report.txt";
             xOut = new BufferedWriter(new FileWriter(exonOnlyReportFile));
             // Exon ID | Transcript ID | Gene name | Number of reads in exons | Total exon length | Duplicate exon reads | Split reads
             xOut.write("Exon\tTranscript\tGene_Name\tExon_Reads\tExon_Length\tDuplicates\tSplit_Reads\n");
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Bad IO for "+ super.OUT_FILE+".intronReport.txt file", e);
+            throw new RuntimeException("Bad IO for "+ super.OUT_FILE+".exon_intron_report.txt file", e);
         }
     }
 
@@ -310,12 +310,12 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
             refSeqIn.close();
 
             // now we can output the RPKM dat in GCT format:
-            out = new BufferedWriter (new FileWriter(super.OUT_FILE + ".rpkm.gct"));
+            out = new BufferedWriter (new FileWriter(super.OUT_FILE + ".transcripts.rpkm.gct"));
             out.write("#1.2\n");
             out.write("" + dataLines.size() + "\t1\n"); // just one sample
             out.write("NAME\tDescription\tSAMPLE\n");
             // so that no transcripts get lost
-            for (String data: dataLines){
+            for (String data: dataLines) {
                 out.write(data);
                 out.write('\n');
             }
@@ -352,7 +352,7 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
             }
             in.close();
 
-            // now we can output the RPKM dat in GCT format:
+            // now we can output the RPKM data in GCT format:
             out = new BufferedWriter (new FileWriter(super.OUT_FILE + ".introns.rpkm.gct"));
             out.write("#1.2\n");
             out.write("" + dataCount + "\t1\n"); // just one sample
@@ -362,23 +362,23 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
 
             xOut.close();
 
-            FileWriter fout = new FileWriter(super.OUT_FILE + ".totalExonQuantifiedReads");
+            FileWriter fout = new FileWriter(super.OUT_FILE + ".totalExonQuantifiedReads.txt");
             fout.write(""+totalExonQuantifiedReads);
             fout.close();
             //todo reformat exons into GCT
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Could not close file "+ super.OUT_FILE+".intronReport.txt ", e);
+            throw new RuntimeException("Could not close file "+ super.OUT_FILE+".exon_intron_report.txt", e);
         }
     }
 
 
     private void shedMetrics(int readStart) {
-        for (Iterator<TranscriptMetrics> it = transcripts.iterator(); it.hasNext();){
+        for (Iterator<TranscriptMetrics> it = transcripts.iterator(); it.hasNext();) {
             TranscriptMetrics met = it.next();
-            if (met.getEnd() < readStart){
+            if (met.getEnd() < readStart) {
                 outputMetric(met);
-                if (met.totalExonReadCount >= LOWER_READ_COUNT_CUTOFF){
+                if (met.totalExonReadCount >= LOWER_READ_COUNT_CUTOFF) {
                     geneLog.add(met.name);
                     transcriptLog.add(met.transcriptId);
                 }
@@ -406,7 +406,7 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
      *
      * @param met
      */
-    private void outputMetric(TranscriptMetrics met)  {
+    private void outputMetric(TranscriptMetrics met) {
     //"Transcript\tGene_Name\tExon_Reads\tExon_Length\tExon_r/b\tIntron_Reads\tIntron_Length\tIntron_r/b\tPeak_Intron_Idx\tPeak_Intron_Reads\tPeak_Intron_Length\tPeak_Intron_r/b\n")
         try{
             out.write(met.transcriptId); out.write('\t');
@@ -462,7 +462,7 @@ public class IntronicExpressionReadBlockWalker extends CountReadBlockMetricsWalk
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Could not close file "+ super.OUT_FILE+".intronReport.txt ", e);
+            throw new RuntimeException("Could not close file "+ super.OUT_FILE+".exon_intron_report.txt", e);
         }
     }
 

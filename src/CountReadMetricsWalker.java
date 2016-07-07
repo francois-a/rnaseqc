@@ -514,7 +514,7 @@ public List<Object> getReferenceMetaData(final String name) {
             out  = new PrintWriter(System.out);
         } else {
             try {
-                out = new PrintWriter (new FileWriter(OUT_FILE));
+                out = new PrintWriter (new FileWriter(OUT_FILE+".metrics.tmp.txt"));  // assume that OUT_FILE is <out_dir>/<sample_id>/<sample_id>
             } catch (IOException e){
                 e.printStackTrace();
                 System.out.println("IOException for file: " + OUT_FILE);
