@@ -1,11 +1,5 @@
 package org.broadinstitute.cga.tools;
 
-
-import javax.mail.Session;
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.InternetAddress;
-
 import java.util.*;
 import java.net.URLEncoder;
 import java.net.URLDecoder;

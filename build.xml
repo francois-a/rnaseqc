@@ -1,11 +1,12 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="RNA-SeQC" default="main" basedir=".">
 
-	<property name="projectName" value="RNASeQC" />
+	<property name="projectName" value="RNA-SeQC" />
 	<property name="lib.dir" value="lib" />
 	<property name="build.dir" value="build" />
 	<property name="src.dir" value="src" />
 	<property name="dist.dir" location="dist" />
 	<property name="dist.lib.dir" location="dist/lib" />
+	<property name="version" value="1.1.9" />
 
 	<!-- ivy start -->
 	<!-- ivy to get dependencies and copy to project lib folder automatically -->
@@ -60,12 +61,9 @@
 
 	<!-- jar it, and declares the ext libraries in manifest.mf file -->
 	<target name="jar" depends="compile, copy-dependencies" description="package, output to JAR">
-
-		<echo message="classpath.name : ${classpath.name} " />
-
+		<echo message="classpath.name : ${classpath.name}" />
 		<mkdir dir="${dist.dir}" />
 		<mkdir dir="${dist.lib.dir}" />
-
 		<jar jarfile="${dist.dir}/${projectName}.jar" basedir="${build.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="org/broadinstitute/cga/rnaseq/RNASeqMetrics" />
@@ -74,12 +72,16 @@
 		</jar>
 	</target>
 
+	<target name="zip" depends="jar" description="Combine .jar and lib">
+		<zip destfile="${projectName}_${version}.zip" basedir="${dist.dir}" />
+	</target>
+
 	<target name="clean" description="clean up">
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
 	</target>
 
 	<!-- Default, run this -->
-	<target name="main" depends="clean, compile, jar" />
+	<target name="main" depends="clean, compile, jar, zip" />
 
 </project>
