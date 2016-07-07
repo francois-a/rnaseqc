@@ -9,7 +9,6 @@ import java.util.ArrayList;
  * User: ddeluca
  * Date: 3/25/11
  * Time: 1:57 PM
- * To change this template use File | Settings | File Templates.
  */
 public class DoCMetrics {
 
@@ -78,9 +77,7 @@ public class DoCMetrics {
 
     private void createGapHistogram(TranscriptDoCResult result) {
         this.gapHistogram = new ObjectCounter<Integer>();
-
     }
-
 
     public boolean has3EndCov() {
         return has3EndCov;
@@ -90,53 +87,53 @@ public class DoCMetrics {
         return has5EndCov;
     }
 
-  	public void setCumulativeGapLength(int cumulativeGapLength) {
-		this.cumulativeGapLength = cumulativeGapLength;
-	}
+    public void setCumulativeGapLength(int cumulativeGapLength) {
+        this.cumulativeGapLength = cumulativeGapLength;
+    }
 
-	public void setNumberOfGaps(int numberOfGaps) {
-		this.numberOfGaps = numberOfGaps;
-	}
+    public void setNumberOfGaps(int numberOfGaps) {
+        this.numberOfGaps = numberOfGaps;
+    }
 
-	public void set3End100Cov(int cov) {
-		this.threeEnd100 = cov;
-	}
+    public void set3End100Cov(int cov) {
+        this.threeEnd100 = cov;
+    }
 
-	public void set3End50Cov(int cov) {
-		this.threeEnd50 = cov;
-	}
+    public void set3End50Cov(int cov) {
+        this.threeEnd50 = cov;
+    }
 
-	public void set3End10Cov(int cov) {
-		this.threeEnd10 = cov;
-	}
+    public void set3End10Cov(int cov) {
+        this.threeEnd10 = cov;
+    }
 
-	public void set5End100Cov(int cov) {
-		this.fiveEnd100 = cov;
-	}
+    public void set5End100Cov(int cov) {
+        this.fiveEnd100 = cov;
+    }
 
-	public void set5End50Cov(int cov) {
-		this.fiveEnd50 = cov;
+    public void set5End50Cov(int cov) {
+        this.fiveEnd50 = cov;
+    }
 
-	}
+    public void set5End10Cov(int cov) {
+        this.fiveEnd10 = cov;
+    }
 
-	public void set5End10Cov(int cov) {
-		this.fiveEnd10 = cov;
-	}
+    public int getNumberOfGaps() {
+        return this.numberOfGaps;
+    }
+    
+    public int getCumulativeGapLength() {
+        return this.cumulativeGapLength;
+    }
 
-	public int getNumberOfGaps(){
-		return this.numberOfGaps;
-	}
-	public int getCumulativeGapLength(){
-		return this.cumulativeGapLength;
-	}
-
-    	/**
-	 * This is the ratio between the cumulative gap lengthg and transcript length
-	 * @return
-	 */
-	public float getGapRatio(){
-		return (float)this.cumulativeGapLength / (float)this.length;
-	}
+    /**
+     * This is the ratio between the cumulative gap lengthg and transcript length
+     * @return
+     */
+    public float getGapRatio() {
+        return (float)this.cumulativeGapLength / (float)this.length;
+    }
 
     public float getThreeEnd100Norm() {
         return this.threeEnd100 / this.getMeanCoverage();
@@ -166,25 +163,24 @@ public class DoCMetrics {
         return meanCoverage;
     }
 
-
-        public void setHas3EndCov(boolean endCoverage) {
+    public void setHas3EndCov(boolean endCoverage) {
         this.has3EndCov = endCoverage;
     }
+
     public void setHas5EndCov(boolean endCoverage) {
         this.has5EndCov = endCoverage;
 
     }
-    
-    
-	public float getCV(){
-		float std = this.getStdDev();
-		float mean = this.getMeanCoverage();
-		return std/mean;
-	}
 
-	public float getStdDev(){
-		return this.stdDev;
-	}
+    public float getCV(){
+        float std = this.getStdDev();
+        float mean = this.getMeanCoverage();
+        return std/mean;
+    }
+
+    public float getStdDev(){
+        return this.stdDev;
+    }
 
     public int getTotalCoverage() {
         return totalCoverage;

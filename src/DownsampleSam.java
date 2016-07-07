@@ -60,7 +60,6 @@ public class DownsampleSam extends CommandLineProgram {
         long total = 0;
         long kept  = 0;
 
-
         for (final SAMRecord rec : in) {
             if (rec.getNotPrimaryAlignmentFlag() || rec.getReadFailsVendorQualityCheckFlag()) continue;
 
@@ -75,8 +74,7 @@ public class DownsampleSam extends CommandLineProgram {
             if (previous == null) {
                 keeper = r.nextDouble() <= PROBABILITY;
                 if (rec.getReadPairedFlag()) decisions.put(key, keeper);
-            }
-            else {
+            } else {
                 keeper = previous;
             }
 

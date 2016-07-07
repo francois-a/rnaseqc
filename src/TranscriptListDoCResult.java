@@ -98,6 +98,6 @@ public class TranscriptListDoCResult {
         this.numberOfGaps = Integer.valueOf(values.get(10));
         this.cumulativeGapLength = Integer.valueOf(values.get(11));
         this.gapRatio = Float.valueOf(values.get(12));
-
     }
+
 }
