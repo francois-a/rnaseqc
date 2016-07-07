@@ -30,7 +30,7 @@ public class ReadCountMetrics {
     private float lowerExpressionCutoff;
 
 
-    public ReadCountMetrics(ArrayList<RNASeqMetrics.MetricSample> samps, String outdir, float lowerExpressionCutoff){
+    public ReadCountMetrics(ArrayList<RNASeqMetrics.MetricSample> samps, String outdir, float lowerExpressionCutoff) {
         this.samples = samps;
         this.outDir = outdir;
         this.combinedGCTFileName = outDir + "/genes.rpkm.gct";
@@ -69,7 +69,6 @@ public class ReadCountMetrics {
                 IOTools.stringToFile(samp.getrRNAMetricsFile(), "0\t0");
             }
         }
-
         calculateLibraryComplexity(singleEnd);
         combineMetricsPerSample();
         combineAcrossSamples();
@@ -83,27 +82,23 @@ public class ReadCountMetrics {
      * @throws IOException
      */
     private String combineAcrossSamples() throws IOException {
-
         GCTFile merged = new GCTFile(samples.get(0).getGCTFile()); // get the first GCT File
-
-        for (int i = 1 ; i < samples.size(); i++){
+        for (int i=1; i<samples.size(); i++) {
             GCTFile gct = new GCTFile(samples.get(i).getGCTFile());
             merged = merged.combinePreAligned(gct);
         }
-
         // fix sample ids
-        for (int i = 0; i < samples.size(); i++){
-            merged.setSampleId(i,samples.get(i).sampId);
+        for (int i=0; i<samples.size(); i++) {
+            merged.setSampleId(i, samples.get(i).sampId);
         }
         // write result to file
         merged.toFile(this.getCombinedGCTFileName());
-
         return this.getCombinedGCTFileName();
     }
 
+
     private void combineMetricsPerSample() throws IOException {
         for (RNASeqMetrics.MetricSample samp: samples){
-            //int expressedCounts = countExpressedTranscripts(samp.getGCTFile());
             combineMetrics(samp);
         }
     }
@@ -115,8 +110,7 @@ public class ReadCountMetrics {
      *
      * @throws IOException
      */
-    private void combineMetrics(RNASeqMetrics.MetricSample samp)
-                                throws IOException{
+    private void combineMetrics(RNASeqMetrics.MetricSample samp) throws IOException {
 
         // load RNA counts:
         String rRNACounts[] = IOTools.fileToString(samp.getrRNAMetricsFile()).split("\\t");
@@ -134,37 +128,31 @@ public class ReadCountMetrics {
         int totalReads = Integer.valueOf(data.split("\\t")[0]);
         out.write(data); out.write("\t"+lc +"\n"); // table 1 data, with injected library complexity
 
-        //table 2:
+        // table 2:
         String header2 = in.readLine() + "\trRNA\trRNA rate"; //\tUnique non-rRNA\tUnique non-rRNA Rate"; // adding two fields to header
         out.write(header2); out.write('\n'); // header 2
 
         data = in.readLine();
-        int uniquMapped = Integer.parseInt(data.split("\\t")[2]);
-        //int iniqueMappedNonrRNA = uniquMapped - uniquerRNA;
+        // int uniquMapped = Integer.parseInt(data.split("\\t")[2]);
+        //int uniqueMappedNonrRNA = uniquMapped - uniquerRNA;
 
-        data = data +"\t"+ totalrRNA+"\t"+((float)totalrRNA/(float)totalReads) ; //+"\t"+
-                //iniqueMappedNonrRNA+"\t"+ ((float)iniqueMappedNonrRNA/(float)totalReads);
+        data = data +"\t"+ totalrRNA+"\t"+((float)totalrRNA/(float)totalReads); //+"\t"+
+        //uniqueMappedNonrRNA+"\t"+ ((float)uniqueMappedNonrRNA/(float)totalReads);
         out.write(data); out.write('\n');
-
 
         // copy the remainder of the tmp metrics file without modification
         String line = in.readLine();
         while (line!=null){
             out.write(line); out.write('\n');
-            line =in.readLine();
+            line = in.readLine();
         }
         out.close();
         in.close();
     }
 
-//    private int countExpressedTranscripts(String gctFile) throws IOException {
-//        GCTFile gct = new GCTFile(gctFile);
-//        return gct.countExpressed(this.lowerExpressionCutoff);
-//
-//    }
 
     private void calculateLibraryComplexity(boolean singleEnd) throws IOException {
-        for (RNASeqMetrics.MetricSample samp: samples){
+        for (RNASeqMetrics.MetricSample samp: samples) {
             System.out.println("Calculating library complexity for " + samp.sampId);
             Performance perf = new Performance("Libary Complexity Calculation Time");
             LibraryComplexity lc = new LibraryComplexity(!singleEnd);
@@ -176,9 +164,7 @@ public class ReadCountMetrics {
             } else {
                 lc.countFragmentsV2(samp.bamFile);
             }
-
             lc.toFile(samp.getLibraryComplexityFile());
-
             System.out.println(perf);
         }
     }
@@ -188,35 +174,34 @@ public class ReadCountMetrics {
      * @param rRNAFile
      */
     private void alignAndCountrRNA(String rRNAFile, boolean singleEnd, String bwa, int rRNAdSampleTarget) throws IOException, InterruptedException {
-        for (RNASeqMetrics.MetricSample samp: samples){
+        for (RNASeqMetrics.MetricSample samp: samples) {
 
             Performance perf = new Performance("BWA based rRNA Estimation for " + samp.sampId, Performance.Resolution.minutes);
             System.out.println("Counting rRNA reads with BWA and " + rRNAFile);
 
             CountAlignedExperimental ca = new CountAlignedExperimental(rRNAFile,samp.getSampleDirectory());
             int totalReads = samp.getTotalReads();
-            double rRNAdSampleRate = (double)rRNAdSampleTarget / (double) totalReads;
+            double rRNAdSampleRate = (double)rRNAdSampleTarget / (double)totalReads;
 
             ca.setdSampleRate(rRNAdSampleRate);
             if (bwa !=null) ca.BWA = bwa;
-            if(samp.hasList()){
+            if (samp.hasList()) {
                 ArrayList<String> files = IOTools.fileToList(samp.listFile, "\n");
                 for (String f: files){
                     ca.countBAM(f, singleEnd);
                 }
-            }else{
+            } else {
                 ca.countBAM(samp.bamFile, singleEnd);
             }
-            String result = ""+ ca.getTotalReads() + "\t"+ca.getUniqueReads() ; //total reads tab unique reads
-
+            String result = ""+ ca.getTotalReads() + "\t"+ca.getUniqueReads();
             IOTools.stringToFile(samp.getrRNAMetricsFile(),result);
             System.out.println(perf);
         }
     }
 
-    private void countrRNAIntervals(String refGenome, String rRNAIntervals, String gatkFlags) throws Exception {
 
-        for (RNASeqMetrics.MetricSample samp: samples){
+    private void countrRNAIntervals(String refGenome, String rRNAIntervals, String gatkFlags) throws Exception {
+        for (RNASeqMetrics.MetricSample samp: samples) {
             Performance perf = new Performance("CountReadMetricsWalker (rRNA) Runtime for "+samp.sampId, Performance.Resolution.minutes);
             System.out.println("Counting rRNA reads");
             // rRNAIntervals: file containing intervals
@@ -225,20 +210,23 @@ public class ReadCountMetrics {
         }
     }
 
+
     private void runRegionCounting(String refGenome, String refGeneFile, String gatkFlags, boolean strictMode) throws Exception {
         for (RNASeqMetrics.MetricSample samp: samples){
             // replaced by "prepare for region counting ..
-
             Performance perf = new Performance("CountReadMetricsWalker Runtime", Performance.Resolution.minutes);
             String intervals = null;// "chr1:3530586-3534177";
+            // samp.getTmpMetricsFile() returns full path: <out_dir>/<sample_id>/<sample_id>.metrics.tmp.txt
             GATKTools.runIntronReadCount(refGenome, samp.getBamFileOrList(), null, refGeneFile, samp.getTmpMetricsFile(), gatkFlags, strictMode);
             System.out.println(perf);
         }
     }
 
+
     public String getCombinedGCTFileName() {
         return combinedGCTFileName;
     }
+
 
     /**
      * Reads in the metrics result tables from the ReadCounter results that were prevsiouly run.
@@ -248,7 +236,6 @@ public class ReadCountMetrics {
      * @throws IOException
      * @param metricTracker
      */
-
     public String getMetricsHTML(ArrayList<HashMap<String, String>> metricTracker) throws IOException {
 
         ArrayList<String[]> resultT1 = new ArrayList<String[]>();
@@ -270,7 +257,7 @@ public class ReadCountMetrics {
 
             if (result == null){
                 System.out.println("No Metrics data calculated. Skipping");
-            }else{
+            } else {
                 header1 = result.get(0);
                 resultT1.add(result.get(1));
                 header2 = result.get(2) ;
@@ -325,12 +312,10 @@ public class ReadCountMetrics {
                     "Similarly, <b>End 1/2 Antisense</b> are the number of End 1 or 2 reads that were sequenced in the antisense direction."+
                     "<b>End 1/2 Sense %</b> are percentages of intragenic End 1/2 reads that were sequenced in the sense direction. </p>\n");
 
-            //System.out.println(metricTable);
-            IOTools.stringToFile(this.outDir+"/countMetrics.html",metricTable.toString()); // just ouput it so we can peek
-        }else{
+            IOTools.stringToFile(this.outDir+"/countMetrics.html", metricTable.toString()); // just ouput it so we can peek
+        } else {
             metricTable.append("none calculated");
         }
-
         return metricTable.toString();
     }
 

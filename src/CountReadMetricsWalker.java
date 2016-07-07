@@ -40,10 +40,8 @@ public class CountReadMetricsWalker extends ReadWalker<Integer,Integer> {
     @Argument(fullName = "outfile_metrics", shortName = "OM", doc="The destination file for the metrics", required=true)
     protected String OUT_FILE = null;
 
-    @Argument(fullName="refseq", shortName="refseq",
-            doc="Name of RefSeq transcript annotation file. ", required=false)
+    @Argument(fullName="refseq", shortName="refseq", doc="Name of RefSeq transcript annotation file.", required=false)
     protected String RefseqFileName = null;
-
 
     @Argument(fullName = "strict_exon_reads", shortName = "strict", doc="Apply filters to reads before quantifying", required=true)
     protected boolean strictExonReads = false;
@@ -54,27 +52,27 @@ public class CountReadMetricsWalker extends ReadWalker<Integer,Integer> {
 
     GenomeLoc lastInterval = null;
     GenomeLoc longestInterval = null;
-    ArrayList<RefSeqFeature> lastAnnotationList =null;
+    ArrayList<RefSeqFeature> lastAnnotationList = null;
     ArrayList<RefSeqFeature> longestRefSeqList = null;
 
-    int totalReads =0;
+    int totalReads = 0;
     int mappedReads = 0;
     int altAlignments = 0;
     int failed = 0;
     int readLength = 0;
 
-    protected int mappedUniqueReads =0;
+    protected int mappedUniqueReads = 0;
     int duplicates = 0;
     //int unique = 0;
     int mappedDuplicates;
     int overlaps = 0;
-    //int coding =0;
+    //int coding = 0;
     int intragenic = 0;
-    int exonic =0;
-    int splitReads=0;
+    int exonic = 0;
+    int splitReads= 0;
     int intergenic = 0;
     int intronOrUTR = 0;
-    int droppedByLength =0;
+    int droppedByLength = 0;
     int end1Sense = 0;
     int end1Antisense = 0;
     int end2Sense = 0;
@@ -83,32 +81,28 @@ public class CountReadMetricsWalker extends ReadWalker<Integer,Integer> {
     int end1Mapped = 0;
     int end2Mapped = 0;
 
-    
-    int thisMismatchCount =0;
+    int thisMismatchCount = 0;
     ObjectCounter<Integer> fragmentLengths = new ObjectCounter<Integer>();
     HashSet<String> transcriptLog= new HashSet<String>();
     HashSet<String> geneLog = new HashSet<String>();
 
-    //boolean isPairedEndData ;
-
     final int MAX_READ_LEGNTH = 100000;
 
     int longestReadLength = 0;
-    int maxFeatureSize =0;
+    int maxFeatureSize = 0;
 
     long totalBases = 0;
-    long mismatchBases =0;
+    long mismatchBases = 0;
 
-    long end1MismatchBases =0;
-    long end2MismatchBases =0;
+    long end1MismatchBases = 0;
+    long end2MismatchBases = 0;
 
-    long end1TotalBases =0;
-    long end2TotalBases =0;
-    
-    int totalMappedPairs =0;
+    long end1TotalBases = 0;
+    long end2TotalBases = 0;
+
+    int totalMappedPairs = 0;
     int chimericPairs = 0;
     int unpairedReads = 0;
-
 
     BufferedWriter chOut = null;
 /*
@@ -124,39 +118,32 @@ public List<Object> getReferenceMetaData(final String name) {
 
     @Override
     public Integer map(ReferenceContext ref, GATKSAMRecord read, RefMetaDataTracker metaDataTracker) {
-
-        if (read.getNotPrimaryAlignmentFlag()){
+        if (read.getNotPrimaryAlignmentFlag()) {
             altAlignments++;
-        }else{
-            if (read.getReadFailsVendorQualityCheckFlag()){
+        } else {
+            if (read.getReadFailsVendorQualityCheckFlag()) {
                 failed ++;
             }
         }
 
         //Short alnDistance = read.getShortAttribute("NM");
-
-//todo        if (!read.getNotPrimaryAlignmentFlag() && read.getProperPairFlag() && alnDistance!=null && alnDistance <=6 && read.getMappingQuality() >0){
+        //todo: if (!read.getNotPrimaryAlignmentFlag() && read.getProperPairFlag() && alnDistance!=null && alnDistance <=6 && read.getMappingQuality() >0){
 
         if (!read.getNotPrimaryAlignmentFlag() && !read.getReadFailsVendorQualityCheckFlag()){
             totalReads++;
-            
             if(!read.getReadPairedFlag()){
                 unpairedReads++;
             }
             if (read.getReadLength() > readLength){
                 readLength = read.getReadLength();
             }
-
             if (read.getDuplicateReadFlag()){
                 duplicates++;
-                //System.out.println("dup");
             }else{
                 //unique++; // removed because it is not true that it is unique, since "not duplicate" set also contains unaligned reads
             }
-
             if (!read.getReadUnmappedFlag()){
                 mappedReads++;
-                
                 if (read.getReadPairedFlag()){
                     if (read.getFirstOfPairFlag()){
                         end1Mapped++;
@@ -164,15 +151,11 @@ public List<Object> getReferenceMetaData(final String name) {
                         end2Mapped++;
                     }
                 }
-
-                // count number of mismatched bases:                
+                // count number of mismatched bases:
                 countMismatchedBases(ref, read);
-                
-                
                 if (read.getDuplicateReadFlag()){
                     mappedDuplicates++;
                 }else{
-
                     mappedUniqueReads++;
                 }
                 //Performance perf = new Performance("Total Map Call: ", Performance.Resolution.milliseconds);
@@ -184,28 +167,21 @@ public List<Object> getReferenceMetaData(final String name) {
                     return 1;
                 }
                 if (length > longestReadLength){
-                    //System.out.println("Longest:\t"+length);
                     longestReadLength = length;
                 }
-
 //                System.out.println("Read:\t"+read.toString());
 //                System.out.println(" at location:\t"+location);
 //                System.out.println(" is duplicate:\t" + read.getDuplicateReadFlag());
                 ArrayList<RefSeqFeature> refSeqs =  getRodList(readLoc);
 
-
-
-
                 //check chimeric pairs
-                if (read.getReadPairedFlag() && !read.getMateUnmappedFlag()){ // if the mate is mapped too:
-                    if (read.getFirstOfPairFlag()){
+                if (read.getReadPairedFlag() && !read.getMateUnmappedFlag()){  // if mate is also mapped
+                    if (read.getFirstOfPairFlag()) {
                         totalMappedPairs++;
-
                     }
                     if (read.getReferenceIndex() != read.getMateReferenceIndex() ||
-                            (Math.abs(read.getAlignmentStart()-read.getMateAlignmentStart()) > CHIMERA_DISTANCE )){
+                            (Math.abs(read.getAlignmentStart()-read.getMateAlignmentStart()) > CHIMERA_DISTANCE)) {
                         chimericPairs++;
-                        
                         String transcript = "";
                         String gene = "";
                         if (refSeqs != null && refSeqs.size() > 0){
@@ -213,10 +189,10 @@ public List<Object> getReferenceMetaData(final String name) {
                             transcript = r.getTranscriptId();
                             gene = r.getGeneName();
                         }
-                        //chOut.write("Transcript Id\tGene Name\tRead Location\tMate Location\tSame Chromosome\n");
-                        try{
-                            chOut.write(transcript+"\t"+gene+"\t"+readLoc.toString()+"\t"+read.getMateReferenceName()+":"+read.getMateAlignmentStart()+"\t"+(read.getReferenceIndex() == read.getMateReferenceIndex() )+"\n");
-                        }catch(IOException e){
+                        try {  // write chimeric pairs
+                            chOut.write(transcript+"\t"+gene+"\t"+readLoc.toString()+"\t"+read.getMateReferenceName()+":"+read.getMateAlignmentStart()
+                                +"\t"+(read.getReferenceIndex() == read.getMateReferenceIndex())+"\n");
+                        } catch(IOException e) {
                             throw new RuntimeException(e.getMessage());
                         }
                     }
@@ -239,13 +215,8 @@ public List<Object> getReferenceMetaData(final String name) {
                         //System.out.println("Largest Num of features:\t"+numOfRefSeqs);
                         this.maxFeatureSize = numOfRefSeqs;
                     }
-                    //Performance condesnse = new Performance("Condense", Performance.Resolution.milliseconds);
-
                     //Collection<RefSeqFeature> refSeqs = this.getRefSeqs(annotationList); // this.condenseRefSeqFeatures(tracker.getAllCoveringRods());
-                    //Collection<RefSeqFeature> refSeqs  = annotationList;
-                    //condesnse.outputIfTookTime();
-
-
+                    //Collection<RefSeqFeature> refSeqs = annotationList;
                     if (numOfRefSeqs == 0){
                         // no refseq track means we're in an intragenic region
                         // could this really happeN?
@@ -255,12 +226,11 @@ public List<Object> getReferenceMetaData(final String name) {
                     }
 
                     if (numOfRefSeqs> 1){
-//                        System.out.println("\toverlapping transcripts!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//                        System.out.println("\toverlapping transcripts!");
                         overlaps++;
                     }
 
                     makeRefSeqDerviedCounts(read, refSeqs, readLoc);
-
                     //forRefs.outputIfTookTime();
                 }
                 //perf.outputIfTookTime();
@@ -268,6 +238,7 @@ public List<Object> getReferenceMetaData(final String name) {
         }// end of not primary alignment check
         return 1;
     }
+
 
     private void countMismatchedBases(ReferenceContext ref, SAMRecord read) {
         if (ref == null) {
@@ -291,8 +262,6 @@ public List<Object> getReferenceMetaData(final String name) {
                 }
             }
         }
-
-        
     }
 
 
@@ -318,7 +287,6 @@ public List<Object> getReferenceMetaData(final String name) {
     //                        System.out.println("\trefseq:" + refSeq.getTranscriptId());
     //                        System.out.println("\trefseq:"+refSeqLoc);
 
-
             //GenomeLoc readLoc = ref.getLocus();
             // sanity check:
             if (!refSeq.overlapsP(readLoc)){
@@ -337,7 +305,6 @@ public List<Object> getReferenceMetaData(final String name) {
     //                            System.out.println("\tIs Exonic");
                 //exonic++;
                 wasExonic=true;
-
             }else{
                 // if we're in a gene but not in an exon ... it must be an intron? it could be UTR :(
                 //intronOrUTR++;
@@ -350,9 +317,7 @@ public List<Object> getReferenceMetaData(final String name) {
 //                wasCoding = true;
 //    //                            System.out.println("\tIs Coding");
 //            }
-
             //overlapps.outputIfTookTime();
-
             //sheck for strand specificity:
             if (refSeq.getStrand() == 1){
                 // end1 reads is sense strand
@@ -366,11 +331,7 @@ public List<Object> getReferenceMetaData(final String name) {
         if (wasExonic) exonic++;
         if (wasIntron) intronOrUTR++;
 //        if (wasCoding) coding++;
-
-       // count strand specificity metrics:
         countStrandSpecificMetrics(read, transcriptWasMinus,transcriptWasPlus);
-
-
     }
 
     protected void countStrandSpecificMetrics(SAMRecord read, boolean transcriptWasMinus, boolean transcriptWasPlus) {
@@ -378,7 +339,6 @@ public List<Object> getReferenceMetaData(final String name) {
             // hmm. ... what can we do if there were both situations? nothing?
         }else if (!transcriptWasPlus && !transcriptWasMinus){
             // transcript is neither sense nor antisense ....
-
         }else{
             if (read.getReadPairedFlag()){
                 if (read.getFirstOfPairFlag()){ // read is END1
@@ -414,9 +374,7 @@ public List<Object> getReferenceMetaData(final String name) {
                         }else{
                             this.end2Antisense++;
                         }
-
                     }
-
                 }
             }else{
                 //what do we do if these are not paired end reads ...
@@ -481,10 +439,9 @@ public List<Object> getReferenceMetaData(final String name) {
             }else{
                 //removed = f;
             }
-
         }
         /*
-        //t odo check whether this is correct
+        //todo check whether this is correct
         if (wasCount > 0 && lastAnnotationList.size() == 0){
             System.out.println("Reduced annoation list from " + wasCount + " to zero");
             System.out.println("\tThis Loc:\t"+loc);
@@ -492,18 +449,14 @@ public List<Object> getReferenceMetaData(final String name) {
             System.out.println("\tRemoved Trans\t" + removed.getLocation());
         }*/
         return lastAnnotationList;
-
     }
 
     private ArrayList<RefSeqFeature> getUnderlyingRefSeqs(RODRecordList annotationList) {
         if (annotationList == null) return null;
-
         ArrayList<RefSeqFeature> list = new ArrayList<RefSeqFeature>(annotationList.size());
         for (GATKFeature f: annotationList){
             RefSeqFeature rs = (RefSeqFeature)f.getUnderlyingObject();
-
             list.add(rs);
-
         }
         return list;
     }
@@ -513,7 +466,6 @@ public List<Object> getReferenceMetaData(final String name) {
     public void initialize() {
         super.initialize();
         MathUtils.ratio(3, 4);
-
 
         if ( RefseqFileName != null ) {
             logger.info("Using RefSeq annotations from "+RefseqFileName);
@@ -530,19 +482,22 @@ public List<Object> getReferenceMetaData(final String name) {
                     refseq.getIterator());
         }
 
-        if ( refseqIterator == null ) logger.info("No gene annotations available");
-
+        if (refseqIterator == null) {
+            logger.info("No gene annotations available");
+        }
         try {
-            chOut=new BufferedWriter(new FileWriter(OUT_FILE+ ".chimericPairs.txt"));
+            chOut = new BufferedWriter(new FileWriter(OUT_FILE+ ".chimericPairs.txt"));
             chOut.write("Transcript Id\tGene Name\tRead Location\tMate Location\tSame Chromosome\n");
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
-
-
     }
 
-    public Integer reduceInit() { return 0; }
+
+    public Integer reduceInit() {
+        return 0;
+    }
+
 
     public Integer reduce(Integer value, Integer sum) {
         return value + sum;
@@ -553,13 +508,13 @@ public List<Object> getReferenceMetaData(final String name) {
         super.onTraversalDone(result);
 
         PrintWriter out;
-        boolean fileOk = true; // we're going to do some wierd handling to output to file if it's there. if
+        boolean fileOk = true; // we're going to do some weird handling to output to file if it's there. if
         // no file is given, we'll go to stdout or if the file fails to open
         if (OUT_FILE == null){
             out  = new PrintWriter(System.out);
-        }else{
+        } else {
             try {
-                out = new PrintWriter (new FileWriter(OUT_FILE ));
+                out = new PrintWriter (new FileWriter(OUT_FILE));
             } catch (IOException e){
                 e.printStackTrace();
                 System.out.println("IOException for file: " + OUT_FILE);
@@ -611,7 +566,7 @@ public List<Object> getReferenceMetaData(final String name) {
         out.println("Mapped Pairs\tUnpaired Reads\tEnd 1 Mapping Rate\tEnd 2 Mapping Rate\tEnd 1 Mismatch Rate\tEnd 2 Mismatch Rate\tFragment Length Mean\tFragment Length StdDev\tChimeric Pairs");
         out.print(totalMappedPairs); out.print('\t');
         out.print(unpairedReads); out.print('\t');
-        out.print((float) end1Mapped / ((float) totalReads / 2f)); out.print('\t');
+        out.print((float)end1Mapped/((float)totalReads/2f)); out.print('\t');
         out.print((float)end2Mapped/((float)totalReads/2f)); out.print('\t');
         out.print((float)end1MismatchBases/(float)end1TotalBases);  out.print('\t');// map rate is total mapped divided by total reads
         out.print((float)end2MismatchBases/(float)end2TotalBases);  out.print('\t');// map rate is total mapped divided by total reads
@@ -625,7 +580,6 @@ public List<Object> getReferenceMetaData(final String name) {
         out.println("Intragenic Rate\tExonic Rate\tIntronic Rate\tIntergenic Rate\tSplit Reads\tExpression Profiling Efficiency\tTranscripts Detected\tGenes Detected"); // TABLE 4
         out.print((float)intragenic/(float)mappedReads);out.print('\t');
         out.print((float)exonic/(float)mappedReads);out.print('\t');
-//        out.print((float)coding/(float)mappedReads);out.print('\t');
         out.print((float)intronOrUTR/(float)mappedReads);out.print('\t');
         out.print((float)intergenic/(float)mappedReads);out.print('\t');
         out.print(splitReads);out.print('\t');
@@ -644,13 +598,15 @@ public List<Object> getReferenceMetaData(final String name) {
 
         out.println();
 
-        try{
+        try {
             chOut.close();
-        }catch(IOException e){ throw new RuntimeException(e.getMessage());}
+        } catch(IOException e) {
+            throw new RuntimeException(e.getMessage());
+        }
 
-        if (fileOk && OUT_FILE != null){
+        if (fileOk && OUT_FILE != null) {
             out.close();
-        }else if (!fileOk){
+        } else if (!fileOk) {
             throw new RuntimeException("Failed to write to " + OUT_FILE);
         }
     }
@@ -674,8 +630,7 @@ public List<Object> getReferenceMetaData(final String name) {
                 n++;
             }
         }
-        
-        return sum / n;  //To change body of created methods use File | Settings | File Templates.
+        return sum / n;
     }
 
     private float getFragmentLengthStdDev(float mean) {
@@ -690,11 +645,8 @@ public List<Object> getReferenceMetaData(final String name) {
                 n++;
             }
         }
-
         return (float)Math.sqrt((double)sum / (n-1f));  
     }
 
-
 }
-
 

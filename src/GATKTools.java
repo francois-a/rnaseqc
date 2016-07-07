@@ -20,7 +20,7 @@ public class GATKTools {
 
     public static void main(String[] args) {
         try{
-            System.out.println("REF_GENOME BAM_FILE INTERVAL REFSEQ  outfile");
+            System.out.println("REF_GENOME BAM_FILE INTERVAL REFSEQ outfile");
             runIntronReadCountDebug(args[0],args[1],args[2],args[3],args[4]);
         }catch(Exception e){
             e.printStackTrace();
@@ -102,20 +102,20 @@ public class GATKTools {
      */
     public static void runCountReadMetricsNoRef(String BAM_FILE, String intervalList, String refseq, String outfile/*, boolean dSample*/) throws Exception {
         System.out.println("Running IntronicExpressionReadBlock Walker ....");
-              CommandLineGATK instance = new CommandLineGATK();
+        CommandLineGATK instance = new CommandLineGATK();
 
-              String commandStr =  "-T IntronicExpressionReadBlock --outfile_metrics "+outfile +
-                      //(dSample?" -rf Downsampling -numReads 2000 -targetReads 1000":"" ) +
-                      " -I "+BAM_FILE+ (intervalList!=null?" -L "+intervalList:"") +
-                      //" -B:refseq,RefSeq "+refseq;
-                      " -refseq "+refseq+(QUIET?" -l ERROR":"");
+        String commandStr =  "-T IntronicExpressionReadBlock --outfile_metrics "+outfile +
+            //(dSample?" -rf Downsampling -numReads 2000 -targetReads 1000":"" ) +
+        " -I "+BAM_FILE+ (intervalList!=null?" -L "+intervalList:"") +
+            //" -B:refseq,RefSeq "+refseq;
+        " -refseq "+refseq+(QUIET?" -l ERROR":"");
 
-              String argv[] = commandStr.split(" ");
-              System.out.println("Arguments: "+ Arrays.toString(argv));
-              CommandLineGATK.start(instance, argv);
+        String argv[] = commandStr.split(" ");
+        System.out.println("Arguments: "+ Arrays.toString(argv));
+        CommandLineGATK.start(instance, argv);
 
-              System.out.println("GATK command result code: " + CommandLineProgram.result);
-              System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
+        System.out.println("GATK command result code: " + CommandLineProgram.result);
+        System.out.println("\t ... GATK CoutReadMetrics Analysis DONE");
     }
 
     /**

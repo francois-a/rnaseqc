@@ -22,12 +22,6 @@ import java.util.ArrayList;
  */
 @Requires({DataSource.READS, DataSource.REFERENCE})
 public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
-//    @Argument(fullName = "outfile_metrics", shortName = "OM", doc="The destination file for the metrics", required=true)
-//    private String OUT_FILE = null;
-//
-//    @Argument(fullName="refseq", shortName="refseq",
-//            doc="Name of RefSeq transcript annotation file. ", required=false)
-//    String RefseqFileName = null;
 
     @Override
     protected void makeRefSeqDerviedCounts(SAMRecord read, ArrayList<RefSeqFeature> refSeqs, GenomeLoc readLoc) {
@@ -35,7 +29,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
         boolean wasIntragenic = false;
         boolean wasExonic = false;
         boolean wasIntron = false;
-        //boolean wasCoding = false;
 
         ArrayList<GenomeLoc> blocks = getBlocksForRead(read);
         for (RefSeqFeature refSeq: refSeqs){
@@ -43,7 +36,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
         //                        System.out.println("\trefseq:"+refSeq.getGeneName());
         //                        System.out.println("\trefseq:" + refSeq.getTranscriptId());
         //                        System.out.println("\trefseq:"+refSeqLoc);
-
                 //GenomeLoc readLoc = ref.getLocus();
                 // sanity check:
                 if (!refSeq.overlapsP(blockLoc)){
@@ -54,37 +46,21 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
                     System.out.println("\tRead: " + read);
                     System.out.println("\tTransc:" + refSeq.getTranscriptId());
                 }
-                //intragenic++;// we are in a gene, otherwise, we would be in the ROD
+                // we are in a gene, otherwise, we would be in the ROD
                 wasIntragenic = true;
-        //                        System.out.println("\tIs Intragenic ...");
-                //Performance overlapps = new Performance("Overlap perf: " , Performance.Resolution.milliseconds);
-
                 if (refSeq.overlapsExonP(blockLoc)){ // returns true if any of the exons overlap this location
-        //                            System.out.println("\tIs Exonic");
-                    //exonic++;
-                    wasExonic=true;
-
-                }else{
+                    wasExonic = true;
+                } else {
                     // if we're in a gene but not in an exon ... it must be an intron? it could be UTR :(
                     //intronOrUTR++;
                     wasIntron = true;
-        //                            System.out.println("\tNOT Exonic");
                 }
-
-//                if (refSeq.overlapsCodingP(blockLoc)){
-//                    //coding++;
-//                    //wasCoding = true;
-//        //                            System.out.println("\tIs Coding");
-//                }
-
-                //overlapps.outputIfTookTime();
             }// end of blocks
 
         }// end of ROD entries
         if (wasIntragenic) intragenic++;
         if (wasExonic) exonic++;
         if (wasIntron) intronOrUTR++;
-        //if (wasCoding) coding++;
     }
 
     /**
@@ -125,6 +101,6 @@ public class CountReadBlockMetricsWalker extends CountReadMetricsWalker {
 
     @Override
     public void onTraversalDone(Integer result) {
-        super.onTraversalDone(result); // creates a tab delmited file with the count results
+        super.onTraversalDone(result); // creates a tab delimited file with the count results
     }
 }

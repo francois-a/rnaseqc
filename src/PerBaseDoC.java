@@ -1133,7 +1133,7 @@ public class PerBaseDoC {
                 out.write("     <dd>Contains estimated library size, number of read pairs, unpaired reads, etc.</dd>\n");
             }
 
-            System.out.println("Absolute path to metrics.tmp.txt" + (new File("../" + samp.getExpressionDir(level)+"/" + sampleId+".metrics.tmp.txt.rpkm.gct").getAbsolutePath()));
+            System.out.println("Absolute path to metrics.tmp.txt: " + (new File("../" + samp.getExpressionDir(level)+"/" + sampleId+".metrics.tmp.txt.rpkm.gct").getAbsolutePath()));
             if ((new File(samp.getExpressionDir(level)+"../" + sampleId+".metrics.tmp.txt.rpkm.gct")).exists()) {
                 out.write("     <dt><a href='../../"+sampleId+"/"+sampleId+".metrics.tmp.txt.rpkm.gct'>Expression File</a></dt>");
                 out.write("     <dd>GCT file containing the expression levels of this sample in RPKM</dd>\n");

@@ -9,16 +9,6 @@ import java.io.*;
 import java.util.*;
 
 
-/**
- * Example:
- * java -jar ~/scripts/GtexReport.jar 20 ~/data/DoC/sample_file.txt /xchip/cga2/berger/RNASeq/refs/Ensembl52.plus.Genome.map
- * /xchip/cga2/berger/RNASeq/refs/Ensembl52.transcriptome.annotations
- * /Volumes/seq_references/Homo_sapiens_assembly18/v0/Homo_sapiens_assembly18.fasta
- * /xchip/cga2/berger/RNASeq/refs/Ensembl52.transcriptome.fasta ./report/
- *
- * ddeluca
- *
- */
 public class RNASeqMetrics {
     public static String VERSION = "v1.1.9 06/26/16";
 
@@ -50,9 +40,9 @@ public class RNASeqMetrics {
     private boolean createRefGeneFromGTF = false;
     private boolean filterGCT;
     private String bwa;
-    private boolean singleEnd            ;
+    private boolean singleEnd;
     private boolean isStrat;
-    private boolean docAll  = false;
+    private boolean docAll = false;
     private int rRNAdSampleTarget = 1000000; // 1 million
     private boolean gapLengthDistribution = false;
 
@@ -120,7 +110,6 @@ public class RNASeqMetrics {
 
 
     private static void checkArgs(CommandLine cl) throws Exception{
-
         if (cl.hasOption("e")){
             String l = cl.getOptionValue("e");
             // end length
@@ -128,7 +117,6 @@ public class RNASeqMetrics {
                 throw new Exception("Acceptable values for e are 50, 100 or 200");
             }
         }
-        
         if(!cl.getOptionValue("t").toLowerCase().endsWith(".gtf")){
             throw new Exception("Transcript file must be in GTF format (and end with the '.gtf' extension); file provided: " + cl.getOptionValue("t"));
         }
@@ -234,9 +222,7 @@ public class RNASeqMetrics {
         }
 
         String corrTable = null;
-
         if(referenceGCTForCorr !=null || bams.size() > 1){
-
             // run R to find the correlation between these rpkms and a given (e.g. affy) microarray
             String[] corFile = correlationComparison(referenceGCTForCorr, theseSamplesGCT, OUT_DIR);
 
@@ -254,11 +240,8 @@ public class RNASeqMetrics {
             }
         }
 
-        //todo add some stacked bar charts to visualize this data
-
         // DO DoC METRICS*********************************
         // create individual depth of coverage reports per sample
-
         if(runDoC){
             PerBaseDoC doc = new PerBaseDoC(bams, OUT_DIR);
 
@@ -297,7 +280,6 @@ public class RNASeqMetrics {
         for (int i = 0 ; i < bams.size(); i++) {
             MetricSample samp = bams.get(i);
             HashMap<String,String> metrics = metricTracker.get(i);
-            
             out.write(samp.sampId);
             out.write("\t");
             out.write(samp.notes);
@@ -307,16 +289,14 @@ public class RNASeqMetrics {
             }
             out.write("\n");
         }
-
         out.close();
     }
 
+
     private void prepareOptionsFromCommandLine(CommandLine cl) throws Exception {
         // GET ARGUMENTS****************************
-
         runDoC = !cl.hasOption("noDoC");
         noMetrics = cl.hasOption("noReadCounting");
-
         if (cl.hasOption("n")) {
             MAX = Integer.parseInt(cl.getOptionValue("n"));
         }
@@ -333,15 +313,12 @@ public class RNASeqMetrics {
             LOWER_GC_CUTOFF = Float.valueOf(cl.getOptionValue("gcMargin"));
             UPPER_GC_CUTOFF = 1f-LOWER_GC_CUTOFF;
         } 
-        
         if (cl.hasOption("gatkFlags")) {
             this.gatkFlags = cl.getOptionValue("gatkFlags");
             System.out.println("Additional GATK flags provided: " + this.gatkFlags);
         }
-
         this.strictMode = cl.hasOption("strictMode");
         this.docAll = cl.hasOption("fullDoC");
-
         // ******************************************
 
         // create directory
@@ -588,8 +565,8 @@ public class RNASeqMetrics {
         return corrFiles;
     }
 
-    public static void runCorrelation(String referenceSample, GCTFile gct,  String outfile) throws IOException, InterruptedException
-    {
+
+    public static void runCorrelation(String referenceSample, GCTFile gct,  String outfile) throws IOException, InterruptedException {
         String[] samples = gct.getSamples();
         int refIndex = -1;
         int index =0;
@@ -629,12 +606,9 @@ public class RNASeqMetrics {
     }
 
 
-
-    public static void runCorrelationMatrix( GCTFile gct,  String outfile) throws IOException, InterruptedException
-    {
+    public static void runCorrelationMatrix( GCTFile gct,  String outfile) throws IOException, InterruptedException {
 
         String[] samps = gct.getSamples();
-
         boolean isPearson = outfile.toLowerCase().contains("pearson");
         
         BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
@@ -653,7 +627,6 @@ public class RNASeqMetrics {
             }else{
                 results = spearman(gct, i);
             }
-            
             out.write(samps[i]);// the sample for this row
             
             // iterate over all samples as columns:
@@ -731,7 +704,6 @@ public class RNASeqMetrics {
         double[] results = new double[nSamps];
         for(int c=0; c < nSamps; c++) {
             double[] column = gct.getColumnData(c);
-
             double[] columnTemp = new double[indices.size()];
 
             //match NAs in both data columns
@@ -739,7 +711,6 @@ public class RNASeqMetrics {
                 columnTemp[q] = Math.log(.01 + column[indices.get(q)]);
                 refColTemp[q] = (logRef?  Math.log(0.01 +refColumn[indices.get(q)]):refColumn[indices.get(q)]);
             }
-
             double result = corr.correlation(refColTemp, columnTemp);
             results[c] = result;
         }
@@ -792,8 +763,6 @@ public class RNASeqMetrics {
      */
     public String createCorrHTMLTableMatrix(ArrayList<MetricSample> samples,String corFile) throws IOException {
         StringBuilder table = new StringBuilder();
-
-
         ArrayList<String[]> rows = IOTools.fileToListofArrays(corFile, null);
         String[] headerRow = rows.get(0);
         ArrayList<String[]> vals = new ArrayList<String[]>();
@@ -811,10 +780,8 @@ public class RNASeqMetrics {
             digitString+="1";
         }
         table.append( getMetricTable(samples, vals, header,digitString, metricTracker));
-
         return table.toString();
     }
-
 
 
     private static ArrayList<String> getOrderedContigsNoIndexing(String ref_genome) throws IOException {
@@ -827,7 +794,6 @@ public class RNASeqMetrics {
                 if (line.startsWith(">")){
                     StringTokenizer toks = new StringTokenizer((line.substring(1)));
                     String contig = toks.nextToken();
-
                     contigs.add(contig);
                 }
                 line = in.readLine();
@@ -838,12 +804,11 @@ public class RNASeqMetrics {
                 throw e;
             }
         }
-
         in.close();
-
         return contigs;
-
     }
+
+
     private static ArrayList<String> getOrderedContigsFAI(String ref_genome) throws IOException {
         ArrayList<String> contigs = new ArrayList<String>();
 
@@ -862,20 +827,15 @@ public class RNASeqMetrics {
                 throw e;
             }
         }
-
         in.close();
-
         return contigs;
-
     }
 
 
     public static String getMetricTable(ArrayList<MetricSample> sampleInfo,
                                         ArrayList<String[]> metricResults, String[] header,
                                         String isDecimal, ArrayList<HashMap<String, String>> metricTracker) {
-        try{
-
-
+        try {
             StringBuilder str = new StringBuilder();
 
             str.append("<table><tr><th>Sample</th><th>Note</th>\n");
@@ -884,10 +844,8 @@ public class RNASeqMetrics {
             }
             str.append("\n</tr>\n");
 
-
             for (int i = 0 ; i < metricResults.size();i++){
                 str.append("<tr>");
-
                 str.append("<td>").append(sampleInfo.get(i).sampId).append("</td><td>").append(sampleInfo.get(i).notes).append("</td>");
                 if (metricResults.get(i).length > isDecimal.length()){
                     System.out.println("Incompatible data and formatting");
@@ -980,23 +938,12 @@ public class RNASeqMetrics {
         }
 
         if (corTable !=null) out.write(corTable); // correlation table
-//		out.write("<table border=1><tr><th>Sample</th><th>Sample Id</th><th>Total Cov.</th><th>Mean Cov.</th><th>Granular 3rd Q</th>");
-//		out.write("<th>Granular Median</th><th>Granular 1st Q</th><th>%Bases above 15</th></tr>\n");
-//		for (String[] sample:samples){
-//
-//			out.write("<tr>");
-//			out.write("<td><a href='"+sample[0]+"/index.html'>"+sample[0] + "</a></td>");
-//			out.write(getSummaryRow(sample[1].replace(".geneexpression.txt", ".sample_summary")));
-//			out.write("</tr>\n");
-//		}
-//		out.write("</table>\n");
 
         out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");
         outputDoCResult(samps, out,"Coverage Metrics for Bottom "+MAX_TRANSCIRPTS+" Expressed Transcripts",PerBaseDoC.ExpressionLevel.low,"lowexpr", endLength, "bottom " + MAX_TRANSCIRPTS, null);
         outputDoCResult(samps, out,"Coverage Metrics for Middle "+MAX_TRANSCIRPTS+" Expressed Transcripts",PerBaseDoC.ExpressionLevel.medium,"medexpr", endLength, "middle " + MAX_TRANSCIRPTS, metricTracker);
         outputDoCResult(samps, out,"Coverage Metrics for Top "+MAX_TRANSCIRPTS+" Expressed Transcripts",PerBaseDoC.ExpressionLevel.high,"highexpr",  endLength, "top " + MAX_TRANSCIRPTS, null);
         out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");
-
 
         out.write("<h3>Mean Coverage</h3>\n");
         out.write("<p>" +
@@ -1009,9 +956,6 @@ public class RNASeqMetrics {
                 "<h4>High Expressed</h4>\n" +
                 "<img src= 'meanCoverageNorm_high.png'>"+
                 "</p>\n");
-
-
-
 
         out.write("<h3>Mean Coverage from 3' End</h3>\n");
         out.write("<p>" +
@@ -1041,9 +985,8 @@ public class RNASeqMetrics {
                 "</p>\n");
         }
 
-        if(this.doStrat){
-            // a stratification by GC analysis was performed
-            out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");            
+        if (this.doStrat) {  // a stratification by GC analysis was performed
+            out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");
             out.write("<p>\n");
             out.write("<h2>GC Stratification</h2>\n");
             out.write("<ul>\n");
@@ -1051,12 +994,10 @@ public class RNASeqMetrics {
             out.write("\t<li><a target='_new' href='gc/mid/index.html'>Moderate GC</a></li>\n");
             out.write("\t<li><a target='_new' href='gc/low/index.html'>Low GC</a></li>\n");
             out.write("</ul>");
-
             out.write("</p>\n");
-
         }
 
-       out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");
+        out.write("\n<HR WIDTH=\"100%\" COLOR=\"#9090900\" SIZE=\"3\">\n");
         out.write("<p>\n");
         out.write("<h2>Files</h2>\n");
         out.write("<table><tr><th>File</th><th>Description</th></tr>\n");
@@ -1065,8 +1006,7 @@ public class RNASeqMetrics {
         outputfileDir = outputfileDir.getParentFile();
         out.write("<tr><td><a target='_new' href='metrics.tsv'>Metrics Tab Separated Value File</a></td><td>Text file containing all the metrics of the report in a single tab delimited file.</td></tr>\n");
 
-        if(curDir.getName().equals(outputfileDir.getName()))
-        {
+        if (curDir.getName().equals(outputfileDir.getName())) {
             out.write("<tr><td><a target='_new' href='genes.rpkm.gct'>RPKM Values</a></td><td>A GCT file containing the expression profiles of each sample</td></tr>\n");
             out.write("<tr><td><a target='_new' href='countMetrics.html'>Read Count Metrics</a></td><td>An HTML file containing only the read count-based metrics</td></tr>\n");
         }
@@ -1074,7 +1014,6 @@ public class RNASeqMetrics {
         out.write("<tr><td><a target='_new' href='meanCoverageNorm_low.txt'>Mean Coverage Plot Data - Low Expr</a></td><td>Text file containing the data for mean coverage plot by position for low expression coverage</td></tr>\n");
         out.write("<tr><td><a target='_new' href='meanCoverageNorm_medium.txt'>Mean Coverage Plot Data - Medium Expr</a></td><td>Text file containing the data for mean coverage plot by position for medium expression coverage</td></tr>\n");
         out.write("<tr><td><a target='_new' href='meanCoverageNorm_high.txt'>Mean Coverage Plot Data - High Expr</a></td><td>Text file containing the data for mean coverage plot by position for high expression coverage</td></tr>\n");
-
 
         out.write("<tr><td><a target='_new' href='meanCoverage_low.txt'>Mean Coverage Plot Data - Low Expr</a></td><td>Text file containing the data for mean coverage plot by distance from 3' end for low expression coverage</td></tr>\n");
         out.write("<tr><td><a target='_new' href='meanCoverage_medium.txt'>Mean Coverage Plot Data - Medium Expr</a></td><td>Text file containing the data for mean coverage plot by distance from 3' end for medium expression coverage</td></tr>\n");
@@ -1118,8 +1057,6 @@ public class RNASeqMetrics {
                                         ArrayList<HashMap<String, String>> metricTracker) throws IOException {
         out.write("<h2>"+title+"</h1>\n");
         out.write("<p>\n The metrics in this table are calculated across the transcripts that were determined to have the highest expression levels. ");
-        //out.write(" They were generated for all the intervals included in the transcriptome.\n</p>\n");
-
 
         out.write("<table border=1>");
         out.write("<tr><th>Sample</th><th>Note</th><th>Mean Per Base Cov.</th><th>Mean CV</th>");
@@ -1158,7 +1095,6 @@ public class RNASeqMetrics {
                 if (metricTracker !=null) metricTracker.get(i).put("5' Norm",""+doc.getAvFiveEnd100());
             }
 
-
             out.write("<td align='right'>"+ doc.getThreeEndCovCount() + "</td>");
             if (endLength.equals("200")){
                 out.write("<td align='right'>"+ String.format("%.3f",doc.getAvThreeEnd200()) + "</td>");
@@ -1178,8 +1114,6 @@ public class RNASeqMetrics {
             out.write("<td align='right'>"+String.format("%.1f",(doc.getGapRatio() * 100f)) + "</td>");
             if (metricTracker !=null) metricTracker.get(i).put("Gap %",""+doc.getGapRatio());
 
-            //out.write("<td><a target='_new' href='"+dir+"/"+doc.getSampleId()+"/meanCovByPosition.txt'>Cov Data</a></td>");
-
             out.write("</tr>\n");
             i++;
         }
@@ -1191,7 +1125,6 @@ public class RNASeqMetrics {
         out.write(" 5' and 3' ends are "+endLength+" base pairs. ");
         out.write(" Gap % is the total cumulative gap length divided by the total cumulative transcript lengths.");
         out.write("\n</p>\n");
-
     }
 
     private static String getSummaryRow(String summaryFile) {
@@ -1208,7 +1141,7 @@ public class RNASeqMetrics {
             in.close();
             return result;
 
-        }catch(IOException e){
+        } catch(IOException e) {
             e.printStackTrace();
             return "<tr><td>could not find summary file</td></tr>";
         }
@@ -1275,30 +1208,30 @@ public class RNASeqMetrics {
          */
         public static ArrayList<MetricSample> readInSamples(String sampleFile, String outDir) throws IOException{
 
-            if (sampleFile.contains("|")){
+            if (sampleFile.contains("|")) {
                 return readInSamplesFromCL(sampleFile,outDir,"\\|");
-            }else if (sampleFile.contains(",")){
+            } else if (sampleFile.contains(",")) {
                 return readInSamplesFromCL(sampleFile,outDir,",");
             }
 
-            HashMap<String,ArrayList<String[]>>  samples = new HashMap<String,ArrayList<String[]>>();
+            HashMap<String,ArrayList<String[]>> samples = new HashMap<String,ArrayList<String[]>>();
 
             BufferedReader in = new BufferedReader(new FileReader(sampleFile));
             String line =in.readLine();
             line = in.readLine(); // skip header
             ArrayList<String> origSampOrder = new ArrayList<String>();
 
-            while (line !=null ){
-                if (!line.trim().startsWith("#") && !line.trim().equals("")){
+            while (line !=null ) {
+                if (!line.trim().startsWith("#") && !line.trim().equals("")) {
                     String[] split = line.split("\\t");
                     //trim
-                    for (int i = 0 ; i < split.length; i++){
+                    for (int i = 0 ; i < split.length; i++) {
                         if (split[i]!=null){
                             split[i] = split[i].trim();
                         }
                     }
                     ArrayList<String[]> sampList = samples.get(split[0]);
-                    if (sampList == null){
+                    if (sampList == null) {
                         sampList = new ArrayList<String[]>();
                         samples.put(split[0],sampList);
                         origSampOrder.add(split[0]);
@@ -1310,15 +1243,15 @@ public class RNASeqMetrics {
 
             ArrayList<MetricSample> finalSamps = new ArrayList<MetricSample>(origSampOrder.size());
 
-            for (String s: origSampOrder){
+            for (String s: origSampOrder) {
                 ArrayList<String[]> thisList = samples.get(s);
-                if (thisList.size() == 1){
+                if (thisList.size() == 1) {
                     String[] samp = thisList.get(0);
                     finalSamps.add(new MetricSample(samp[0],samp[1],samp[2]));
                 } else {
                     // make list file
                     String bamList = "";
-                    for (String[] split: thisList){
+                    for (String[] split: thisList) {
                         bamList+=split[1]+"\n";
                     }
                     String listFile = outDir+ "/" + s+".list";
@@ -1329,58 +1262,51 @@ public class RNASeqMetrics {
                     finalSamps.add(ms);
                 }
             }
-
             MetricSample.prepare(finalSamps, outDir);
-
             return finalSamps;
         }
+
 
         private static ArrayList<MetricSample> readInSamplesFromCL(String sampleString, String outDir, String delim) {
             ArrayList<MetricSample> samps = new ArrayList<MetricSample>();
             String[] l = sampleString.split(delim);
             MetricSample ms = new MetricSample(l[0],l[1],l[2]);
             samps.add(ms);
-
             MetricSample.prepare(samps, outDir);
-
             return samps;
         }
 
         /**
-     * creates the sample directorys for all samples
-     * names the temporary sample file for all samples
-     *
-     */
+         * creates the sample directories for all samples
+         * names the temporary sample file for all samples
+         *
+         */
         private static void prepare(ArrayList<MetricSample> samples, String outDir) {
-
-            for (RNASeqMetrics.MetricSample samp: samples){
-                String tmpMetricFile = outDir+"/" + samp.sampId +"/" + samp.sampId+".metrics.tmp.txt";
-                String sampDir = outDir+"/" + samp.sampId;
+            for (RNASeqMetrics.MetricSample samp: samples) {
+                String sampDir = outDir + "/" + samp.sampId;
                 File dir = new File(sampDir);
                 dir.mkdir();
 
-                samp.setTmpMetricFile(tmpMetricFile);
+                String tmpMetricFile =   outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.tmp.txt";
+                String rRNAMetricsFile = outDir+ "/" + samp.sampId +"/" + samp.sampId + ".rRNA_counts.txt";
+                String lcOutputFile =    outDir+ "/" + samp.sampId +"/" + samp.sampId + ".libraryComplexity.txt";
+                String metricsFile =     outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.txt";
+                String gctFile =         outDir+ "/" + samp.sampId +"/" + samp.sampId + ".metrics.tmp.txt.rpkm.gct";  // rename
+
                 samp.setSampDir(sampDir);
-                String rRNAMetricsFile  =  outDir+"/" + samp.sampId +"/" + samp.sampId+".rRNA_counts.txt";
+                samp.setTmpMetricFile(tmpMetricFile);
                 samp.setrRNAMetricsFile(rRNAMetricsFile);
-
-                String lcOutputFile = outDir+"/" + samp.sampId +"/" + samp.sampId+".libraryComplexity.txt"; //todo add this file to the HTML page for the sample
                 samp.setLibraryComplexityFile(lcOutputFile);
-
-                String metricsFile = outDir+"/" + samp.sampId +"/" + samp.sampId+".metrics.txt";
                 samp.setMetricsFile(metricsFile);
-
-                String gctFile = outDir+"/" + samp.sampId +"/" + samp.sampId+".metrics.tmp.txt.rpkm.gct";
                 samp.setGCTFile(gctFile);
             }
         }
-
 
         public void setListFile(String listFile) {
             this.listFile = listFile;
         }
 
-        public boolean hasList(){
+        public boolean hasList() {
             return this.listFile != null;
         }
 
@@ -1427,13 +1353,15 @@ public class RNASeqMetrics {
         public void setMetricsFile(String metricsFile) {
             this.metricsFile = metricsFile;
         }
-        public String getMetricsFile(){
+
+        public String getMetricsFile() {
             return this.metricsFile;
         }
 
         public String getGCTFile() {
             return gctFile;
         }
+
         public void setGCTFile(String file){
             this.gctFile = file;
         }
@@ -1477,6 +1405,7 @@ public class RNASeqMetrics {
         public String getGapLengthHistogramFile(PerBaseDoC.ExpressionLevel level) {
             return getExpressionDir(level)+"/gapLengthHistogram.txt";
         }
+
         public String getDoCTranscriptsResultsFile(PerBaseDoC.ExpressionLevel level) {
             return getExpressionDir(level) +sampId+".DoCTranscripts";
         }
@@ -1485,4 +1414,5 @@ public class RNASeqMetrics {
             return getExpressionDir(level)+sampId+".DoCTranscriptsSummary";
         }
     }
+
 }
