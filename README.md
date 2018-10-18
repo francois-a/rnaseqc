@@ -5,6 +5,9 @@
 This is a temporary repository for the [RNA-SeQC](https://www.broadinstitute.org/cancer/cga/rna-seqc) quality control software for RNA sequencing data.
 
 #### Running the software
+
+Java 1.7 is required.
+
 RNA-SeQC provides two distinct functionalities:
 
 1. Generation of quality control (QC) metrics.
