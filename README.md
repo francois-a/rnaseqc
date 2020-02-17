@@ -2,7 +2,7 @@
 
 ## RNA-SeQC
 
-This is a temporary repository for the [RNA-SeQC](https://www.broadinstitute.org/cancer/cga/rna-seqc) quality control software for RNA sequencing data.
+**Note: this is an archival repository for v1.1.9 of the [RNA-SeQC](https://www.broadinstitute.org/cancer/cga/rna-seqc) quality control software for RNA sequencing data. For the latest version, please see https://github.com/broadinstitute/rnaseqc.**
 
 #### Running the software
 
